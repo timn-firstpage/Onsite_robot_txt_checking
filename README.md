@@ -35,7 +35,7 @@
 
 10.5 采用 **Are special pages handled appropriately?**：购物车／普通感谢页接受有效 Disallow 或可读取 noindex；后台／私人账户内容必须有授权控制；重复内容按 canonical、重定向或 noindex 判断。公开登录／注册页按约定 SEO 策略检查。不统一要求所有类别 Disallow。
 
-未发现候选不能证明页面不存在。NA 必须写明原因、尝试范围和发现限制。超时、403、缺字段等无法确认时 Result 使用 Needs Review 并解释。SF 的 Non-Indexable 不等于 noindex；忽略 robots 后读到 noindex，不代表 Google 能读取。此 flow 不执行交易、登录私人账户或完整安全扫描。
+未发现候选不能证明页面不存在。NA 必须写明原因、尝试范围和发现限制。超时、403、缺字段等无法确认时 记录缺失证据及下一步，补齐前不交付完整最终报告。SF 的 Non-Indexable 不等于 noindex；忽略 robots 后读到 noindex，不代表 Google 能读取。此 flow 不执行交易、登录私人账户或完整安全扫描。
 
 ### 默认／插件规则的边界
 
@@ -48,11 +48,21 @@ robots.txt 中的 add-to-cart、woocommerce 上传目录或日志路径，只作
 | Checklist | Check · Result · Findings · Coverage |
 | Issues | Issue · Issue Description · How to Fix · Address |
 
-Result 使用 Yes / No / NA / Needs Review；未确认或未执行必须写 Needs Review，不能留空。每个 NA 必须提供原因，每个 No 必须关联具体 issue。Issues 只写确认的问题，单元格内换行列点，Address 每个完整 URL 一行。两张表始终保留。完整输入定义见 [report-schema.md](references/report-schema.md)。
+Result 严格使用 Yes / No / NA。未确认或未执行的检查写入 evidence_gaps.json 和 handover，补齐后才生成最终报告，不留空、不增加第四种结果，也不把资料缺失标成 NA。每个 NA 必须提供原因，每个 No 必须关联具体 issue。Issues 只写确认的问题，单元格内换行列点，Address 每个完整 URL 一行。两张表始终保留。完整输入定义见 [report-schema.md](references/report-schema.md)。
 
 文件名：`{site name}_robots_audit_{YYYY-MM-DD}.xlsx`，日期按用户时区；已有文件不覆盖。
 
 ## 使用
+
+### 首次使用：Screaming Frog 配置
+
+首次导入 skill 后的第一次 audit，Agent 按 [配置清单与 Computer Use 流程](references/sf-first-run-setup.md) 核对 SF。MCP 不能配置的选项，可由执行环境实际提供的 native Computer Use 操作；Mac 必须具备 Mac 应用控制能力，不能使用 Windows API 或仅浏览器工具冒充。
+
+主要设置：Googlebot User-Agent、主 profile Obey robots.txt、CSS/JS Store/Crawl、Store HTML、HTTP Headers；需要动态覆盖时启用 JavaScript Rendering 和 Store Rendered HTML。audit profile 关闭 Respect Noindex 和 Respect Canonical，避免相关 URL 被 SF 从结果中隐藏。MCP 场景另需 Database storage、实际 server URL 和 allowed base；已有连接直接复用。
+
+配置前记录/备份现有 profile，保存独立 .seospiderconfig，不覆盖默认设置或中断其他 crawl。实际菜单随版本/macOS 变化，以 UI 为准。设置结果保存到 run 的 sf-setup.json；source.crawl_config_path / crawl_settings_file 记录本机文件位置。这些由 Agent 操作和验证，不是 Python collector 自动设置。
+
+配置权限不等于启动新 crawl：source.allow_new_crawl 仍适用。旧 crawl 的配置不会因今天修改而补齐；需要小范围重抓时记录新的 ID/时间/profile。没有 native Computer Use 时提供人工设置步骤，并准确说明未验证项。
 
 将仓库作为 skill 导入，入口是根目录 [SKILL.md](SKILL.md)。默认可自动发现，也可显式调用 `$onsite-audit-robots`。导入 skill 不等于安装 Python 或连接 MCP。安装位置由你的客户端确定；仓库不自动改全局客户端设置。
 

@@ -8,9 +8,9 @@ from build_report import build, normalize, report_filename
 
 
 def fixture():
-    return {'checklist':[
+    return {'requested_checks':['10.1','10.4','10.5'],'checklist':[
         {'id':'10.1','check':'10.1 Does robots.txt exist?','result':'No','findings':'Empty robots.txt observed.','coverage':'One synthetic response.'},
-        {'id':'10.4','check':'10.4 CSS/JS access','result':'','findings':'No resource export.','unresolved_reason':'Missing SF evidence.','coverage':'Not checked.'},
+        {'id':'10.4','check':'10.4 CSS/JS access','result':'Yes','findings':'Required resources allowed and fetched.','coverage':'Two synthetic CSS/JS resources.'},
         {'id':'10.5','check':'10.5 Special pages','result':'NA','findings':'No verifiable objects.','na_reason':'15 candidate paths tested; none verifiable; no transaction performed.','coverage':'Synthetic candidates.'}],
         'issues':[{'check_ids':['10.1'],'issue':'Empty robots.txt','description':'=untrusted description','how_to_fix':'Configure appropriate directives.','addresses':['https://example.com/robots.txt?x=1&y=2']}]}
 
@@ -32,17 +32,19 @@ class ReportTests(unittest.TestCase):
             self.assertEqual([c.value for c in wb['Checklist'][1]],['Check','Result','Findings','Coverage'])
             self.assertEqual([c.value for c in wb['Issues'][1]],['Issue','Issue Description','How to Fix','Address'])
             self.assertIn(data['checklist'][2]['na_reason'],wb['Checklist']['C4'].value)
-            self.assertIn('Missing SF evidence.',wb['Checklist']['C3'].value)
-            self.assertEqual(wb['Checklist']['B3'].value,'Needs Review')
+            self.assertEqual(wb['Checklist']['B3'].value,'Yes')
+            self.assertEqual(wb['Checklist'].data_validations.dataValidation[0].formula1,'"Yes,No,NA"')
             self.assertEqual(wb['Issues']['D2'].value,data['issues'][0]['addresses'][0])
             self.assertEqual(wb['Issues']['B2'].data_type,'s')
             self.assertEqual(len(wb['Checklist'].data_validations.dataValidation),1)
             wb.close()
             with self.assertRaises(FileExistsError): build(data,output)
 
-    def test_rejects_na_without_reason_and_unknown_without_reason(self):
-        for idx,key in [(2,'na_reason'),(1,'unresolved_reason')]:
-            data=fixture(); del data['checklist'][idx][key]
+    def test_rejects_na_without_reason_and_unknown_results(self):
+        data=fixture(); del data['checklist'][2]['na_reason']
+        with self.assertRaises(ValueError): normalize(data)
+        for value in ['', 'Needs Review', 'Incomplete', None]:
+            data=fixture(); data['checklist'][1]['result']=value
             with self.assertRaises(ValueError): normalize(data)
 
     def test_rejects_false_yes_missing_issue_and_invalid_links(self):
@@ -53,13 +55,12 @@ class ReportTests(unittest.TestCase):
         data=fixture(); data['issues'][0]['check_ids']=['10.7']
         with self.assertRaises(ValueError): normalize(data)
 
-    def test_explicit_review_requires_reason_and_cannot_create_issue(self):
-        data=fixture(); data['checklist'][1]['result']='Needs Review'
-        checks,_=normalize(data)
-        self.assertEqual(checks[1]['result'],'Needs Review')
-        del data['checklist'][1]['unresolved_reason']
+    def test_incomplete_scope_or_evidence_blocks_final_export(self):
+        data=fixture(); data['checklist'].pop()
         with self.assertRaises(ValueError): normalize(data)
-        data=fixture(); data['issues'][0]['check_ids']=['10.4']
+        data=fixture(); data['evidence_gaps']=[{'check':'10.4','missing':'resource relationships'}]
+        with self.assertRaises(ValueError): normalize(data)
+        data=fixture(); del data['requested_checks']
         with self.assertRaises(ValueError): normalize(data)
 
     def test_duplicate_check_and_legacy_schema(self):
@@ -68,7 +69,7 @@ class ReportTests(unittest.TestCase):
         with self.assertRaises(ValueError): normalize({'overview':[]})
 
     def test_empty_issue_sheet_and_shared_resource_addresses(self):
-        data={'checklist':[{'id':'10.4','check':'10.4 CSS/JS','result':'Yes','findings':'None detected in complete export.','coverage':'2 synthetic pages.'}],'issues':[]}
+        data={'requested_checks':['10.4'],'checklist':[{'id':'10.4','check':'10.4 CSS/JS','result':'Yes','findings':'None detected in complete export.','coverage':'2 synthetic pages.'}],'issues':[]}
         with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
             build(data,Path(directory)/'audit.xlsx')
             wb=load_workbook(Path(directory)/'audit.xlsx'); self.assertEqual(wb['Issues'].max_row,1); wb.close()

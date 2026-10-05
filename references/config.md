@@ -5,7 +5,7 @@ Use config.template.json for robots-only runs. Integrated configs may carry addi
 | Settings | Executor / purpose |
 | --- | --- |
 | site.start_url, allowed_hosts | Collector uses scope; agent uses site selection. site.name is used by agent when naming report |
-| run_id; source.* | Agent selects completed SF crawl/exports and honours allow_new_crawl for any new discovery/List Mode crawl |
+| run_id; source.* | Agent selects completed SF crawl/exports and honours allow_new_crawl for any new discovery/List Mode crawl. crawl_config_path points to an actual locally saved SF profile; crawl_settings_file records verified settings tied to the relevant crawl; collector reads neither |
 | mcp.* | Agent uses the actual server/allowed-base/tool schema; collector does not connect to MCP |
 | checks.robots_txt | Agent routes this flow; explicitly false prevents collector execution |
 | checks.live_checks | Collector skips network and records unresolved status when false; agent must also avoid new live URL checks |

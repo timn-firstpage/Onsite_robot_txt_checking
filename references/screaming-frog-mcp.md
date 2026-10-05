@@ -2,6 +2,8 @@
 
 Reuse the HTTPS flow's existing MCP endpoint, allowed directory, completed crawl and runtime. Do not register a second server or guess port/tool names. Local exports are equally supported and need no live MCP connection.
 
+For first-install audit setup, read [the SF setup checklist](sf-first-run-setup.md). Native Computer Use may set UI-only options and save a per-run profile where the executing environment supports it; actual version/platform and saved settings must be verified. Setup is separate from starting a crawl.
+
 1. Discover actual live tools/schema and filter/field names, and save the mapping/version in manifest. This repository has not performed an SF MCP end-to-end test.
 2. Select the supplied crawl ID or explicitly confirm the matching site/time. Never load whichever crawl is latest without checking. Work serially when the integrated agent shares a Spider instance.
 3. Confirm crawl completion/rendering/user-agent/robots behavior. Incomplete evidence cannot prove an overall Yes. Existing records are timestamped crawl evidence, not fresh HTTP tests.
@@ -31,6 +33,6 @@ The skill run config does not change a saved SF crawl. Record the settings used 
 | CSS/JS crawling and resource relationships | For 10.4 include resource URL, source page, HTTP response and applicable robots status. Resource counts alone are insufficient; record exclusions and dynamic coverage |
 | List Mode | Load the 22 (or actual run's) candidate URLs for targeted response/content/directive evidence rather than blindly crawling the whole site. Requires allow_new_crawl permission; missing old crawl rows prove nothing |
 
-Resolve each check independently: 10.2 needs important-page inventory + HTTP/Googlebot permissions; 10.3 needs real applicable should-not-crawl targets + effective rules; 10.4 needs required-resource source/target relationships + response/permissions; 10.5 needs page-purpose/control evidence + relevant directives. Missing JS rendering blocks a dynamic-scope conclusion, not a supported static result automatically. Missing extraction or settings is Needs Review only where material to that check. '/training' and HTTP 200 do not establish private exposure.
+Resolve each check independently: 10.2 needs important-page inventory + HTTP/Googlebot permissions; 10.3 needs real applicable should-not-crawl targets + effective rules; 10.4 needs required-resource source/target relationships + response/permissions; 10.5 needs page-purpose/control evidence + relevant directives. Missing JS rendering blocks a dynamic-scope conclusion, not a supported static result automatically. Missing extraction or settings is an evidence gap only where material to that check. '/training' and HTTP 200 do not establish private exposure.
 
-Fresh robots and older crawl evidence must each retain their dates. State the time mismatch, and use targeted fresh validation for critical cases before claiming current compliance. No confirmed Issues is not an overall pass while any applicable checks are Needs Review.
+Fresh robots and older crawl evidence must each retain their dates. State the time mismatch, and use targeted fresh validation for critical cases before claiming current compliance. No confirmed Issues is not an overall pass while any applicable checks lack sufficient evidence.

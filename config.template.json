@@ -10,7 +10,9 @@
     "mode": "reuse_crawl",
     "crawl_id": null,
     "export_directory": null,
-    "allow_new_crawl": false
+    "allow_new_crawl": false,
+    "crawl_config_path": null,
+    "crawl_settings_file": null
   },
   "mcp": {
     "server_name": "screaming-frog",

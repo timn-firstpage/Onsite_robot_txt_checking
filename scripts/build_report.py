@@ -36,6 +36,11 @@ def required_text(row, fields):
 def normalize(data):
     if "overview" in data:
         raise ValueError("Legacy schema: migrate to checklist/issues with separate description and fix")
+    if data.get("evidence_gaps"):
+        raise ValueError("Audit incomplete: resolve evidence_gaps before exporting the final report")
+    requested = data.get("requested_checks", sorted(CHECK_IDS))
+    if not isinstance(requested, list) or not requested or any(not isinstance(cid, str) or cid not in CHECK_IDS for cid in requested) or len(set(requested)) != len(requested):
+        raise ValueError("requested_checks must contain unique supported check IDs")
     checks, issues = data.get("checklist"), data.get("issues")
     if not isinstance(checks, list) or not checks or not isinstance(issues, list):
         raise ValueError("Non-empty checklist and issues list required")
@@ -45,17 +50,17 @@ def normalize(data):
         required_text(row, ["id", "check", "findings", "coverage"])
         if row["id"] not in CHECK_IDS or row["id"] in ids:
             raise ValueError("Unknown/duplicate check ID")
-        if row.get("result") == "":
-            row["result"] = "Needs Review"  # migrate legacy unresolved rows without hiding them
-        if row.get("result") not in {"Yes", "No", "NA", "Needs Review"}:
-            raise ValueError("Result must be Yes, No, NA or Needs Review")
-        reason_field = "na_reason" if row["result"] == "NA" else "unresolved_reason" if row["result"] == "Needs Review" else None
+        if row.get("result") not in {"Yes", "No", "NA"}:
+            raise ValueError("Final Result must be Yes, No or NA; resolve missing evidence first")
+        reason_field = "na_reason" if row["result"] == "NA" else None
         if reason_field:
             required_text(row, [reason_field])
             if row[reason_field] not in row["findings"]:
                 row["findings"] += "\n" + row[reason_field]
         required_text(row, ["findings"])
         ids[row["id"]] = row
+    if set(ids) != set(requested):
+        raise ValueError("Final report must include every requested check; do not silently omit unresolved checks")
     unique, linked = {}, set()
     for source in issues:
         row = dict(source)
@@ -116,11 +121,11 @@ def build(data, output):
                         cell.font = Font(name="Calibri", size=11, color="0563C1", underline="single")
             sheet.row_dimensions[excel_row[0].row].height = min(409, max(30, line_count * 16 + 8))
             if title == "Checklist":
-                color = {"No": "FCE4D6", "NA": "E7E6E6", "Needs Review": "FFF2CC"}.get(excel_row[1].value)
+                color = {"No": "FCE4D6", "NA": "E7E6E6"}.get(excel_row[1].value)
                 if color:
                     excel_row[1].fill = PatternFill("solid", fgColor=color)
         if title == "Checklist":
-            validation = DataValidation(type="list", formula1='"Yes,No,NA,Needs Review"', allow_blank=False)
+            validation = DataValidation(type="list", formula1='"Yes,No,NA"', allow_blank=False)
             validation.showErrorMessage = True
             sheet.add_data_validation(validation)
             validation.add(f"B2:B{sheet.max_row}")
