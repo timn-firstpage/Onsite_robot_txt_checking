@@ -4,9 +4,11 @@ Reuse the HTTPS flow's existing MCP endpoint, allowed directory, completed crawl
 
 For first-install audit setup, read [the SF setup checklist](sf-first-run-setup.md). Native Computer Use may set UI-only options and save a per-run profile where the executing environment supports it; actual version/platform and saved settings must be verified. Setup is separate from starting a crawl.
 
+Native control failure is not an MCP failure. Continue using available SF MCP/export evidence rather than blocking every check behind UI setup. Discover supported operations in the actual tool schema; no assumed setters. If MCP cannot obtain required content/config and native control is unsupported, archive the exact gap and return a one-time manual profile/export action; no repeated polling or indefinite pending.
+
 1. Discover actual live tools/schema and filter/field names, and save the mapping/version in manifest. This repository has not performed an SF MCP end-to-end test.
 2. Select the supplied crawl ID or explicitly confirm the matching site/time. Never load whichever crawl is latest without checking. Work serially when the integrated agent shares a Spider instance.
-3. Confirm crawl completion/rendering/user-agent/robots behavior. Incomplete evidence cannot prove an overall Yes. Existing records are timestamped crawl evidence, not fresh HTTP tests.
+3. Record crawl completion and known settings. Do not require rendering/user-agent/robots settings as a global gate. Verify a setting only when a check depends on interpreting that crawl behavior and equivalent direct evidence is unavailable. Existing records are timestamped crawl evidence, not fresh HTTP tests.
 4. Export complete URL data to files within the actual SF allowed base; only counts and a few examples go into chat. Map address, status, redirect/final URL, robots status, Meta Robots, X-Robots-Tag, canonical, title/H1 and required resource links. Use raw fields, not only Indexability.
 5. Directives > Noindex identifies meta/header noindex. Response Codes > Blocked by robots.txt identifies blocked URLs and matched rules where available. Discover actual MCP filter names, not assumed UI-to-API equivalence. Get all candidate responses rather than only noindex matches.
 6. Missing candidate URLs require an authorized List Mode crawl or user exports; do not infer 404/noindex absence from missing crawl rows. Honour source.allow_new_crawl. If live schema cannot perform the needed operation, retain candidate file and explain unresolved checks rather than inventing API calls.
@@ -22,7 +24,7 @@ Primary references:
 
 ## Crawl settings and minimum evidence
 
-The skill run config does not change a saved SF crawl. Record the settings used when that crawl was made; a setting chosen today cannot retrospectively verify an older crawl. If MCP does not expose settings, accept the saved SF configuration or operator-confirmed settings tied to the crawl ID/time; do not label them tool-verified.
+The skill run config does not change a saved SF crawl. Record known settings used when that crawl was made; a setting chosen today cannot retrospectively verify an older crawl. Unknown settings do not automatically invalidate explicit response/header/meta/canonical records or independently interpreted live robots rules. Request a setting only if it is material to a specific unresolved conclusion and cannot be replaced by available evidence. If needed and MCP does not expose it, accept the saved SF configuration or operator-confirmed settings tied to the crawl ID/time; do not label them tool-verified. Do not request all Googlebot/robots/rendering settings merely because native control failed.
 
 | SF setting/evidence | Purpose and audit boundary |
 | --- | --- |
@@ -31,7 +33,7 @@ The skill run config does not change a saved SF crawl. Record the settings used 
 | Spider > Rendering | Text Only checks initial HTML; JavaScript executes/rendering and can reveal dynamic links/resources/directives. Use JS when needed, not as an unconditional prerequisite for every static URL. Declare static-only limitations |
 | Spider > Extraction > Store HTML / Store Rendered HTML | Retain source/rendered HTML for page-type, soft-404 and content verification. Enable only for targeted URLs needing content, not the entire shared crawl; it does not guarantee the MCP connector can expose stored content. If unavailable through MCP, obtain actual local SF exports or targeted permitted content evidence |
 | CSS/JS crawling and resource relationships | For 10.4 include resource URL, source page, HTTP response and applicable robots status. Resource counts alone are insufficient; record exclusions and dynamic coverage |
-| List Mode | Load the 22 (or actual run's) candidate URLs for targeted response/content/directive evidence rather than blindly crawling the whole site. Requires allow_new_crawl permission; missing old crawl rows prove nothing |
+| List Mode | Load the actual run's candidate URLs for targeted response/content/directive evidence rather than blindly crawling the whole site. Requires allow_new_crawl permission; missing old crawl rows prove nothing |
 
 Resolve each check independently: 10.2 needs important-page inventory + HTTP/Googlebot permissions; 10.3 needs real applicable should-not-crawl targets + effective rules; 10.4 needs required-resource source/target relationships + response/permissions; 10.5 needs page-purpose/control evidence + relevant directives. Missing JS rendering blocks a dynamic-scope conclusion, not a supported static result automatically. Missing extraction or settings is an evidence gap only where material to that check. '/training' and HTTP 200 do not establish private exposure.
 

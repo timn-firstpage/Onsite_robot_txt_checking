@@ -60,7 +60,11 @@ Result 严格使用 Yes / No / NA。未确认或未执行的检查写入 evidenc
 
 ### 首次使用：Screaming Frog 配置
 
-首次导入 skill 后的第一次 audit，Agent 按 [配置清单与 Computer Use 流程](references/sf-first-run-setup.md) 核对 SF。MCP 不能配置的选项，可由执行环境实际提供的 native Computer Use 操作；Mac 必须具备 Mac 应用控制能力，不能使用 Windows API 或仅浏览器工具冒充。
+首次导入 skill 后的第一次 audit，Agent 先检查已有证据和工具能力。[配置清单与 Computer Use 流程](references/sf-first-run-setup.md) 只用于确实需要配置或补查的部分，不要求先核对全部设置才执行 audit。MCP 不能配置的选项，可由执行环境实际提供的 native Computer Use 操作；Mac 必须具备 Mac 应用控制能力，不能使用 Windows API 或仅浏览器工具冒充。
+
+Native Computer Use 是可选路径，不是整个 audit 的前置条件。先发现真实工具能力；明确 disabled/unsupported 时立即停止 UI 尝试，其他错误只有在状态实际改变后最多重试一次。优先使用可用 MCP、已有 profile 或完整导出；相关证据已足够的检查直接执行。没有任何自动路径时，保存已完成检查、候选与具体证据缺口，返回一次明确的手工补充动作，不一直 pending、不反复初始化。skill 本身不能赋予 Mac 原生控制能力或系统权限。
+
+不要求补齐所有 Googlebot／robots／rendering config。有效的响应、header、meta robots、canonical 和独立解释的 live robots 规则，可以支持对应判断；只有某项结论依赖 SF 抓取行为且没有等效证据时，才核实相关设置。静态证据不强制要求 JS rendering。缺口必须写成“哪个 URL／字段／结论缺什么”，不能只写“无法验证 SF settings”。
 
 主要设置：Googlebot User-Agent、主 profile Obey robots.txt、CSS/JS Store/Crawl 和指令/header 证据。共用 metadata crawl 不默认开启全站 Store HTML；只有少量内容补查 profile 开启 Store HTML，需要动态证据时才启用 JavaScript Rendering 和 Store Rendered HTML。audit profile 关闭 Respect Noindex 和 Respect Canonical，避免相关 URL 被 SF 从结果中隐藏。MCP 场景另需 Database storage、实际 server URL 和 allowed base；已有连接直接复用。
 
