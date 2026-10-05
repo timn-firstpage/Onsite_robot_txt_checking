@@ -45,9 +45,11 @@ def normalize(data):
         required_text(row, ["id", "check", "findings", "coverage"])
         if row["id"] not in CHECK_IDS or row["id"] in ids:
             raise ValueError("Unknown/duplicate check ID")
-        if row.get("result") not in {"Yes", "No", "NA", ""}:
-            raise ValueError("Result must be Yes, No, NA or blank")
-        reason_field = "na_reason" if row["result"] == "NA" else "unresolved_reason" if row["result"] == "" else None
+        if row.get("result") == "":
+            row["result"] = "Needs Review"  # migrate legacy unresolved rows without hiding them
+        if row.get("result") not in {"Yes", "No", "NA", "Needs Review"}:
+            raise ValueError("Result must be Yes, No, NA or Needs Review")
+        reason_field = "na_reason" if row["result"] == "NA" else "unresolved_reason" if row["result"] == "Needs Review" else None
         if reason_field:
             required_text(row, [reason_field])
             if row[reason_field] not in row["findings"]:
@@ -114,11 +116,11 @@ def build(data, output):
                         cell.font = Font(name="Calibri", size=11, color="0563C1", underline="single")
             sheet.row_dimensions[excel_row[0].row].height = min(409, max(30, line_count * 16 + 8))
             if title == "Checklist":
-                color = {"No": "FCE4D6", "NA": "E7E6E6", "": "FFF2CC"}.get(excel_row[1].value)
+                color = {"No": "FCE4D6", "NA": "E7E6E6", "Needs Review": "FFF2CC"}.get(excel_row[1].value)
                 if color:
                     excel_row[1].fill = PatternFill("solid", fgColor=color)
         if title == "Checklist":
-            validation = DataValidation(type="list", formula1='"Yes,No,NA"', allow_blank=True)
+            validation = DataValidation(type="list", formula1='"Yes,No,NA,Needs Review"', allow_blank=False)
             validation.showErrorMessage = True
             sheet.add_data_validation(validation)
             validation.add(f"B2:B{sheet.max_row}")

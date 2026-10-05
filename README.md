@@ -35,7 +35,7 @@
 
 10.5 采用 **Are special pages handled appropriately?**：购物车／普通感谢页接受有效 Disallow 或可读取 noindex；后台／私人账户内容必须有授权控制；重复内容按 canonical、重定向或 noindex 判断。公开登录／注册页按约定 SEO 策略检查。不统一要求所有类别 Disallow。
 
-未发现候选不能证明页面不存在。NA 必须写明原因、尝试范围和发现限制。超时、403、缺字段等无法确认时 Result 留空并解释。SF 的 Non-Indexable 不等于 noindex；忽略 robots 后读到 noindex，不代表 Google 能读取。此 flow 不执行交易、登录私人账户或完整安全扫描。
+未发现候选不能证明页面不存在。NA 必须写明原因、尝试范围和发现限制。超时、403、缺字段等无法确认时 Result 使用 Needs Review 并解释。SF 的 Non-Indexable 不等于 noindex；忽略 robots 后读到 noindex，不代表 Google 能读取。此 flow 不执行交易、登录私人账户或完整安全扫描。
 
 ### 默认／插件规则的边界
 
@@ -48,7 +48,7 @@ robots.txt 中的 add-to-cart、woocommerce 上传目录或日志路径，只作
 | Checklist | Check · Result · Findings · Coverage |
 | Issues | Issue · Issue Description · How to Fix · Address |
 
-Result 使用 Yes / No / NA，未确认留空。每个 NA 必须提供原因，每个 No 必须关联具体 issue。Issues 只写确认的问题，单元格内换行列点，Address 每个完整 URL 一行。两张表始终保留。完整输入定义见 [report-schema.md](references/report-schema.md)。
+Result 使用 Yes / No / NA / Needs Review；未确认或未执行必须写 Needs Review，不能留空。每个 NA 必须提供原因，每个 No 必须关联具体 issue。Issues 只写确认的问题，单元格内换行列点，Address 每个完整 URL 一行。两张表始终保留。完整输入定义见 [report-schema.md](references/report-schema.md)。
 
 文件名：`{site name}_robots_audit_{YYYY-MM-DD}.xlsx`，日期按用户时区；已有文件不覆盖。
 

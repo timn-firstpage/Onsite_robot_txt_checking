@@ -33,7 +33,7 @@ class ReportTests(unittest.TestCase):
             self.assertEqual([c.value for c in wb['Issues'][1]],['Issue','Issue Description','How to Fix','Address'])
             self.assertIn(data['checklist'][2]['na_reason'],wb['Checklist']['C4'].value)
             self.assertIn('Missing SF evidence.',wb['Checklist']['C3'].value)
-            self.assertIsNone(wb['Checklist']['B3'].value)
+            self.assertEqual(wb['Checklist']['B3'].value,'Needs Review')
             self.assertEqual(wb['Issues']['D2'].value,data['issues'][0]['addresses'][0])
             self.assertEqual(wb['Issues']['B2'].data_type,'s')
             self.assertEqual(len(wb['Checklist'].data_validations.dataValidation),1)
@@ -51,6 +51,15 @@ class ReportTests(unittest.TestCase):
         data=fixture(); data['issues']=[]
         with self.assertRaises(ValueError): normalize(data)
         data=fixture(); data['issues'][0]['check_ids']=['10.7']
+        with self.assertRaises(ValueError): normalize(data)
+
+    def test_explicit_review_requires_reason_and_cannot_create_issue(self):
+        data=fixture(); data['checklist'][1]['result']='Needs Review'
+        checks,_=normalize(data)
+        self.assertEqual(checks[1]['result'],'Needs Review')
+        del data['checklist'][1]['unresolved_reason']
+        with self.assertRaises(ValueError): normalize(data)
+        data=fixture(); data['issues'][0]['check_ids']=['10.4']
         with self.assertRaises(ValueError): normalize(data)
 
     def test_duplicate_check_and_legacy_schema(self):
