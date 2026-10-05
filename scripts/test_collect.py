@@ -50,6 +50,12 @@ class CollectorTests(unittest.TestCase):
                 opener.return_value.open.assert_not_called()
             self.assertEqual(json.loads((path / "usage.json").read_text())["mcp_calls"], 7)
 
+    def test_fragments_deduplicate_without_losing_pagination_queries(self):
+        urls = ["https://example.com/category/a?page=2#top", "https://example.com/category/a?page=2#bottom", "https://example.com/category/a?page=3"]
+        rows, _ = candidates("https://example.com", [], urls, 100)
+        observed = [row["url"] for row in rows if row["source"] == "observed"]
+        self.assertEqual(observed, ["https://example.com/category/a?page=2", "https://example.com/category/a?page=3"])
+
 
 if __name__ == "__main__":
     unittest.main()

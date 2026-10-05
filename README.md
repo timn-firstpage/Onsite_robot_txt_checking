@@ -41,6 +41,10 @@
 
 robots.txt 中的 add-to-cart、woocommerce 上传目录或日志路径，只作为候选线索，不证明网站有购物车、插件仍启用或敏感文件公开。区分“有规则”“测试 URL 被规则阻挡”“实际页面存在”。只有内容及真实流程证据支持后，才套用对应类别策略。无可验证购物流程时，购物车子项 NA 并写明范围；其他类别仍独立判断。通用规则无实际负面影响，不自动生成 Issue 或建议删除。admin-ajax 的 Allow 也不单独视为后台泄露。详细规则见 [robots-rules.md](references/robots-rules.md)。
 
+### 分页／分类变体
+
+候选增加 /page/2、?page=2、?paged=2、/category、/categories，并从真实链接补充分类 slug 及筛选/排序变体。默认每条分页链最多取 10 页，每类分类最多抽样 5 个变体，由 Agent/SF discovery 流程执行，同时受全局预算约束。去除 fragment 后去重，不无限生成页码或参数组合；检测循环、重复内容与无效分页，记录被排除范围。正常分类页和内容不同的分页不自动 Disallow/noindex，也不统一 canonical 到第一页。collector 只生成有限清单，不负责控制 SF 整站 crawl。
+
 ## Excel schema
 
 | Sheet | Columns |

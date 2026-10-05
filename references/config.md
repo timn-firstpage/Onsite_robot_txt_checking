@@ -20,6 +20,7 @@ Use config.template.json for robots-only runs. Integrated configs may carry addi
 | robots.user_agent | Agent configures/verifies Googlebot permissions in SF; collector's HTTP identifier is OnsiteRobotsAudit/1.0, not simulated Googlebot |
 | robots.temporary_inventory_page_limit, temporary_inventory_depth_limit | Agent configures bounded public link discovery in SF; collector does not crawl the site |
 | robots.dynamic_resources | Agent enables/verifies SF rendering/resource coverage; collector does not render JavaScript |
+| robots.pagination_pages_per_series, variants_per_category | Agent caps discovered pagination series and category variant samples; collector does not expand series or enforce independent SF crawl scope |
 
 Agent-owned settings are execution instructions, not a proxy that automatically enforces SF server limits. Record actual coverage and consumption in manifest/usage. One integrated agent shares cumulative usage and operates on a Spider serially.
 

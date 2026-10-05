@@ -16,6 +16,8 @@ SEEDS = {
     "admin": ["/admin", "/administrator", "/backend", "/dashboard", "/wp-admin"],
     "account": ["/account", "/my-account", "/profile", "/login", "/signin", "/register"],
     "search": ["/search"],
+    "pagination": ["/page/2", "/?page=2", "/?paged=2"],
+    "category": ["/category", "/categories"],
 }
 RECOGNISED = {"user-agent", "allow", "disallow", "sitemap", "crawl-delay"}
 MAX_BYTES = 512 * 1024
@@ -69,6 +71,8 @@ def candidates(origin, prefixes, known_urls, limit):
     rows = {}
     for url in known_urls:
         if origin_of(url) == origin:
+            # Fragments do not change the HTTP request; retain path/query exactly.
+            url = urlsplit(url)._replace(fragment="").geturl()
             rows[url] = {"url": url, "source": "observed", "class_hint": None}
     for prefix in [""] + prefixes:
         if not isinstance(prefix, str) or any(c in prefix for c in "?#") or "://" in prefix or ".." in prefix.split("/"):

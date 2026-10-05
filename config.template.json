@@ -54,6 +54,8 @@
     "temporary_inventory_depth_limit": 5,
     "candidate_limit": 100,
     "requests_per_second": 1,
-    "dynamic_resources": false
+    "dynamic_resources": false,
+    "pagination_pages_per_series": 10,
+    "variants_per_category": 5
   }
 }

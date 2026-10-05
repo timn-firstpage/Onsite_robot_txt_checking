@@ -51,8 +51,22 @@ Use these seed suffixes beneath the root and observed locale prefixes, within co
 | Admin | /admin, /administrator, /backend, /dashboard, /wp-admin |
 | Account | /account, /my-account, /profile, /login, /signin, /register |
 | Crawl-control candidates | /search and observed filter/sort/search parameter variants |
+| Pagination | /page/2, /?page=2, /?paged=2; actual /category/<observed-slug>/page/2 and next links from the inventory |
+| Category | /category, /categories; actual category slugs and their observed sort/filter/pagination variants |
 
 Duplicate content requires observed variants plus actual content comparison; a query parameter or matching title is not sufficient. No login, registration, form submission, order creation or private-account access. This is an SEO audit, not a penetration test or exhaustive sensitive-path scanner.
+
+## Pagination/category variants and crawl loops
+
+For 10.2 preserve valuable category landing pages and meaningful pagination needed to discover products/articles. /page/ or /category/ alone is not an automatic Disallow/noindex requirement. Distinct paginated item sets are not duplicates simply because the template/title is shared; do not recommend canonicalising all distinct pages to page 1. Verify relevant self-canonicals and page-specific responses where indexable pagination is intended.
+
+For 10.3/10.5 inspect observed low-value filter/sort combinations, equivalent query/path representations, repeated/empty/out-of-range pagination, and recursive URL growth. Confirm actual content and crawl-control intent before reporting absent controls. Out-of-range page numbers should not repeat the last page or silently return a normal homepage; record the response/content evidence. Noindex and canonical do not themselves impose a hard crawl boundary.
+
+For temporary discovery the agent must keep a visited/requested set, strip fragments from request identity, preserve path/query evidence and avoid unsafe lowercasing or indiscriminate query removal. Do not request a known URL twice, follow redirect/pagination cycles indefinitely, invent thousands of page numbers, or enumerate the Cartesian product of filters. Follow actual links; cap each pagination series at robots.pagination_pages_per_series and each category's variant sample at robots.variants_per_category, plus global page/depth/request limits. Exceeding an audit sample limit is a coverage limitation, not proof the site is defective.
+
+Stop further expansion of a series when it cycles, points to already-tested pages, returns verified 404/410, or repeatedly serves the same confirmed item set/content for different page numbers. Use source/target link pairs, final destinations and actual item/content fingerprints; shared header/footer alone is insufficient. Keep counts and excluded families in Coverage, and fetch targeted evidence for a suspected site defect before writing an Issue.
+
+These per-family limits are enforced by the agent's discovery workflow/SF scope configuration, not by the collector (which only generates a finite candidate list). For broad SF discovery configure actual scope exclusions/limits from observed patterns, or use staged bounded List Mode batches; do not claim this helper automatically controls an independent SF crawl.
 
 ## Special-page policies (10.5)
 
@@ -79,3 +93,6 @@ Any confirmed failing applicable class establishes No; all applicable classes pa
 - https://www.screamingfrog.co.uk/seo-spider/tutorials/robots-txt-tester/
 - https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec
 - https://developers.google.com/search/docs/crawling-indexing/robots/intro
+
+- https://developers.google.com/search/docs/specialty/ecommerce/pagination-and-incremental-page-loading
+- https://developers.google.com/crawling/docs/faceted-navigation
