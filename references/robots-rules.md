@@ -68,6 +68,16 @@ Stop further expansion of a series when it cycles, points to already-tested page
 
 These per-family limits are enforced by the agent's discovery workflow/SF scope configuration, not by the collector (which only generates a finite candidate list). For broad SF discovery configure actual scope exclusions/limits from observed patterns, or use staged bounded List Mode batches; do not claim this helper automatically controls an independent SF crawl.
 
+## Bot-specific full-site blocking
+
+Always inspect User-agent grouping, not just the presence/count of Disallow: /. A full-site rule applies to its matching bot group; many named groups without Googlebot or a matching wildcard do not establish Googlebot is blocked. Merge duplicate group names for counting; preserve raw line evidence and evaluate effective matching rules, including Allow exceptions. Disallow count is not an automatic defect threshold.
+
+Summarize bots blocked site-wide and distinguish search/index discovery, AI search/retrieval, training/extended-use controls, SEO/backlink tools and unknown/legacy names. Use current primary vendor documentation for roles; do not assign purpose solely from a bot's name. Google-Extended does not control Google Search inclusion/ranking. Applebot differs from Applebot-Extended. GPTBot differs from OAI-SearchBot, and user-triggered ChatGPT-User requests have different robots behavior; a listed rule alone does not prove actual service denial.
+
+For 10.2, No is supported when an important live page is blocked for a bot the site's stated discovery policy requires. For 10.3, evaluate alignment with both allowed important-page discovery and intended restrictions. Site-wide blocking of a required discovery bot is a separate cause from missing restrictions on low-value paths. Confirm required channels from user policy; do not silently make every named bot mandatory. If policy is not yet known, disclose the block list and exact unanswered policy question in the handover rather than guessing a final result. Restricted training or backlink tools alone need not be defects; omitted bots are not proof of real access through HTTP/WAF.
+
+Confirmed policy conflict creates an Issues row such as 'Required discovery bot blocked site-wide', naming the specific bot, applicable rules, affected public URLs and the intended channel. Describe potential restricted access, not proven ranking loss or absence from an index. Recommend adjusting only the conflicting group after owner policy is known, preserving intentional restrictions. Never recommend deleting every bot block solely because the list is long.
+
 ## Special-page policies (10.5)
 
 | Class | Accepted policy | Confirmed defect |
@@ -96,3 +106,8 @@ Any confirmed failing applicable class establishes No; all applicable classes pa
 
 - https://developers.google.com/search/docs/specialty/ecommerce/pagination-and-incremental-page-loading
 - https://developers.google.com/crawling/docs/faceted-navigation
+
+- https://developers.google.com/crawling/docs/crawlers-fetchers/google-common-crawlers
+- https://developers.openai.com/api/docs/bots
+- https://support.apple.com/en-ie/119829
+- https://duckduckgo.com/duckduckgo-help-pages/results/duckduckbot

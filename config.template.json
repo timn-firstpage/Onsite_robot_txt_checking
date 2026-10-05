@@ -12,7 +12,8 @@
     "export_directory": null,
     "allow_new_crawl": false,
     "crawl_config_path": null,
-    "crawl_settings_file": null
+    "crawl_settings_file": null,
+    "content_crawl_config_path": null
   },
   "mcp": {
     "server_name": "screaming-frog",
@@ -56,6 +57,8 @@
     "requests_per_second": 1,
     "dynamic_resources": false,
     "pagination_pages_per_series": 10,
-    "variants_per_category": 5
+    "variants_per_category": 5,
+    "content_evidence_strategy": "targeted",
+    "content_batch_size": 25
   }
 }

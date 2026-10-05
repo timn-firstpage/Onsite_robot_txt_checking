@@ -62,9 +62,9 @@ Result 严格使用 Yes / No / NA。未确认或未执行的检查写入 evidenc
 
 首次导入 skill 后的第一次 audit，Agent 按 [配置清单与 Computer Use 流程](references/sf-first-run-setup.md) 核对 SF。MCP 不能配置的选项，可由执行环境实际提供的 native Computer Use 操作；Mac 必须具备 Mac 应用控制能力，不能使用 Windows API 或仅浏览器工具冒充。
 
-主要设置：Googlebot User-Agent、主 profile Obey robots.txt、CSS/JS Store/Crawl、Store HTML、HTTP Headers；需要动态覆盖时启用 JavaScript Rendering 和 Store Rendered HTML。audit profile 关闭 Respect Noindex 和 Respect Canonical，避免相关 URL 被 SF 从结果中隐藏。MCP 场景另需 Database storage、实际 server URL 和 allowed base；已有连接直接复用。
+主要设置：Googlebot User-Agent、主 profile Obey robots.txt、CSS/JS Store/Crawl 和指令/header 证据。共用 metadata crawl 不默认开启全站 Store HTML；只有少量内容补查 profile 开启 Store HTML，需要动态证据时才启用 JavaScript Rendering 和 Store Rendered HTML。audit profile 关闭 Respect Noindex 和 Respect Canonical，避免相关 URL 被 SF 从结果中隐藏。MCP 场景另需 Database storage、实际 server URL 和 allowed base；已有连接直接复用。
 
-配置前记录/备份现有 profile，保存独立 .seospiderconfig，不覆盖默认设置或中断其他 crawl。实际菜单随版本/macOS 变化，以 UI 为准。设置结果保存到 run 的 sf-setup.json；source.crawl_config_path / crawl_settings_file 记录本机文件位置。这些由 Agent 操作和验证，不是 Python collector 自动设置。
+配置前记录/备份现有 profile，保存独立 .seospiderconfig，不覆盖默认设置或中断其他 crawl。实际菜单随版本/macOS 变化，以 UI 为准。设置结果保存到 run 的 sf-setup.json；source.crawl_config_path / content_crawl_config_path / crawl_settings_file 记录主 profile、补查 profile 与验证记录位置。这些由 Agent 操作和验证，不是 Python collector 自动设置。
 
 配置权限不等于启动新 crawl：source.allow_new_crawl 仍适用。旧 crawl 的配置不会因今天修改而补齐；需要小范围重抓时记录新的 ID/时间/profile。没有 native Computer Use 时提供人工设置步骤，并准确说明未验证项。
 
@@ -93,3 +93,9 @@ collect_robots.py 仅获取 robots 文件及生成候选，不自动验证候选
 ## 验证范围
 
 离线测试使用合成证据，验证分类、候选生成、两张表字段、NA 原因、No/Issues 关联、URL/query 保留、公式注入防护与禁止覆盖。未执行真实网站或 SF MCP 端到端测试，不能把样例当客户 audit。规则依据见 [robots-rules.md](references/robots-rules.md)，本机 MCP 事实以实际工具 schema 为准。
+
+## 共用 crawl 的性能与任务隔离
+
+先复用主 crawl 的 URL/状态/指令/canonical/资源关系，仅对无法判断的候选补充 HTML。robots 的 1,000 页、深度 5、分页 10 页/分类变体 5 个等限制，只用于 robots 补充发现，不写入其他任务的主 crawl/default profile。主 crawl 的范围及预算由整合 agent 决定，不能拿 robots 模板的 200 个补查请求数字作为全站 crawl URL 上限。共享 usage 仍累计，不暗中增加总体预算。
+
+补查使用独立 List Mode profile/crawl ID，默认每批 25 个必要 URL，按需要继续下一批而不是 25 个后停止。静态补查只存 source HTML；必要动态批次才存 rendered HTML。已有内容证据直接复用；预算不足记录缺口，其他不依赖此内容的任务继续进行。完成补查恢复原 SF profile，不污染下一任务。JSON 设置由 Agent 落实，不会自动改变本机 SF。
