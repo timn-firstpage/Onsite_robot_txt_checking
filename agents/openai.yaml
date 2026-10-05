@@ -1,0 +1,3 @@
+interface:
+  display_name: "Onsite Robots.txt Audit"
+  short_description: "Audit robots rules with Screaming Frog and Excel"
