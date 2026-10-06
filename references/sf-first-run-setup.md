@@ -35,7 +35,7 @@ Keep the shared sf-handover.json path in the local manifest/handover; it records
 | 10.1 / 10.6 / 10.7 | Direct robots response, content, lowercase endpoint and declarations; these can proceed without SF setup |
 | 10.2 | Sitemap/fallback URL inventory and effective Googlebot permissions; successful HTTP fetch and extra purpose confirmation are not pass prerequisites |
 | 10.3 | Agent selects applicable families from site evidence before follow-up; effective Googlebot rules for those finite enumeration samples; all blocked supports scoped Yes without existence proof. No non-empty effective Disallow in readable robots gives audit-standard No with further validation |
-| 10.4 | Required CSS/JS source-page/resource relationships, responses and bot permissions, with dynamic exclusions |
+| 10.4 | Actual CSS/JS identity, intended-public source-page relationships, responses and effective bot permissions; qualify verified private-only exclusions and dynamic scope |
 | 10.5 | Actual purpose/access-control evidence plus relevant meta/header noindex, canonical or redirects |
 
 Use independently interpretable live rules and explicit response/directive evidence where sufficient. Verify SF user-agent/robots mode only when a conclusion depends on that crawl's behavior; verify rendering only for dynamic claims. Do not request all settings solely because native control failed. Ignore-robots diagnostics must be separate and cannot establish Google can read a blocked noindex. Obey-mode missing blocked-page content requires a specific diagnostic/export gap, not invented absence.

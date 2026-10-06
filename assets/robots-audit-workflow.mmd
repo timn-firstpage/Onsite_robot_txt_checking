@@ -14,7 +14,7 @@ flowchart TD
         I --> J["10.2 逐条判断有效 Googlebot 权限<br/>未被挡即可通过，不追加内容验证门槛"]
         G --> K["Agent 判断网站性质与实际功能<br/>选择适用样本，记录排除类别及原因"]
         K --> L["10.3 有限样本的 Disallow 覆盖<br/>非电商不强制购物车规则<br/>无有效 Disallow 或确认模板残留报 No"]
-        G --> M["10.4 SF 页面与 CSS/JS 关系<br/>检查必要资源权限及响应"]
+        G --> M["10.4 确认 CSS/JS 身份与公开源页面关系<br/>私有页专用资源记录排除；共用资源保留<br/>有效 blocked 不因 HTTP 200 变 allowed"]
         K --> N["10.5 真实页面分类及适用控制<br/>Disallow、可读取 noindex、canonical、重定向或访问保护"]
         H --> O["按项判定，保留已查证据与覆盖范围"]
         J --> O
