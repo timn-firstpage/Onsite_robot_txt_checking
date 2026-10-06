@@ -1,0 +1,47 @@
+flowchart TD
+    A["输入网站 URL、已有文件路径和 run config"] --> B["建立本次 run<br/>记录来源、时间、范围与累计预算"]
+    B --> C["Python 获取并缓存 robots.txt<br/>保存原文、状态、跳转、错误及 Sitemap 声明"]
+    B --> D{"有适用的 SF crawl 或导出？"}
+    D -->|有| E["复用必要字段<br/>不重新加载 config"]
+    D -->|部分或没有| F["保留已有证据<br/>记录缺少的 URL、字段或资源结果"]
+    C --> G["合并当前可用证据"]
+    E --> G
+    F --> G
+
+    subgraph CHECKS["逐项检查 10.1–10.7"]
+        G --> H["10.1 文件存在与有效性<br/>10.6 小写入口<br/>10.7 Sitemap 声明"]
+        G --> I["Sitemap URL 优先<br/>缺 sitemap 时使用已有 crawl 或真实链接清单"]
+        I --> J["10.2 逐条判断有效 Googlebot 权限<br/>未被挡即可通过，不追加内容验证门槛"]
+        G --> K["Agent 判断网站性质与实际功能<br/>选择适用样本，记录排除类别及原因"]
+        K --> L["10.3 有限样本的 Disallow 覆盖<br/>非电商不强制购物车规则<br/>无有效 Disallow 按约定报 No"]
+        G --> M["10.4 SF 页面与 CSS/JS 关系<br/>检查必要资源权限及响应"]
+        K --> N["10.5 真实页面分类及适用控制<br/>Disallow、可读取 noindex、canonical、重定向或访问保护"]
+        H --> O["按项判定，保留已查证据与覆盖范围"]
+        J --> O
+        L --> O
+        M --> O
+        N --> O
+    end
+
+    O --> Y["Yes：检查范围符合规则"]
+    O --> X["No：确认问题或约定 audit 标准不符合"]
+    O --> NA["NA：符合该项不适用边界，写原因"]
+    O --> HC["Human Check：具体证据缺口<br/>写已检查、缺少或失败、下一步动作"]
+    Y --> P["写入并验证 findings<br/>缺请求项补为 Human Check，不遗漏检查"]
+    X --> P
+    NA --> P
+    HC --> P
+    P --> Q["先交付最终 Excel<br/>Checklist：全部请求项及核查说明<br/>10. Robot.txt：仅确认 No；无问题则只留表头"]
+    Q --> R{"仍需要 SF 补充证据？"}
+    R -->|不需要| DONE["本次交付完成"]
+    R -->|需要| S{"允许请求新 crawl？"}
+    S -->|否| WAIT["保留候选、缺口和已交报告<br/>接受后续已有证据，不循环 pending"]
+    S -->|是| T["SF shared config 准备<br/>全站默认 main；必要定向内容使用 targeted"]
+    T --> U{"所选 profile 已确认加载且未改变？"}
+    U -->|是| W["用户确认网站与 sitemap<br/>List 补查确认候选 URL 清单"]
+    U -->|否| V["先保存所选 config 到实际 Downloads<br/>再加载；加载失败立即给手动 Load 指引"]
+    V --> W
+    W --> RUN["用户手动 Start 并监督错误<br/>保存 crawl 或导出到实际 Downloads"]
+    RUN --> VERIFY["验证站点、时间、范围、完成状态及必要字段<br/>保留 429、错误和缺行，不当作零结果"]
+    VERIFY --> UPDATE["合并补查证据，重新判断受影响项目<br/>输出新报告，不覆盖旧文件"]
+    UPDATE -. "下一次证据更新" .-> G

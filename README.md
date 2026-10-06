@@ -25,23 +25,101 @@
 | Screaming Frog | 实际抓取响应、Googlebot robots 权限、Meta Robots、X-Robots-Tag、canonical、CSS/JS 及渲染证据 |
 | Agent | 根据页面内容分类，按预设策略判断，编写 Findings、问题描述与修复方法 |
 
-| Check | 标准 |
+## 10.1–10.7 逐项检查逻辑
+
+此 skill 只执行 robots 检查，不执行 9.1–9.3 的 HTTP→HTTPS、Mixed Content 或 www/non-www 检查。响应及跳转证据用于判断 robots 文件、资源可用性或候选页面类别；SF 配置、crawl 和运行环境可以共用。
+
+| Item | 怎么检查 | 结果判断 |
+| --- | --- | --- |
+| **10.1 robots.txt 是否存在？** | 请求小写 `/robots.txt`，保存状态、跳转和原文，检查有效指令、空文件及错误 HTML。 | **Yes**：有效文件。**No**：确认不存在、内容无效、空白或仅注释。**Human Check**：403、429、超时或截断等使结果无法确认。 |
+| **10.2 重要页面有没有被误挡？** | 提取 sitemap URL，逐条判断有效 Googlebot 规则。没有可用 sitemap 时，用已有 crawl／真实链接建立替代清单；不额外要求页面分类、noindex 或内容验证。 | **Yes**：检查范围中的 URL 全部未被挡。**No**：确认有 URL 被挡，列地址及匹配规则。**NA**：robots.txt 确认不存在，或用户明确不用检查。**Human Check**：清单／权限证据不完整，写明已查和未查范围。 |
+| **10.3 有没有合适的 Disallow？** | Agent 先根据实际内容、导航、功能和用户信息判断网站性质，选择适用的有限样本，再检查有效 Googlebot 规则。购物车、结账、账户等是可选类别，不是所有网站的必选项目。 | **Yes**：选定的适用样本全部被挡，注明样本范围。**No**：可读 robots 完全没有适用于 Googlebot 的非空 Disallow；或确认应限制的真实 URL 未被挡。写原因及 further validate 建议。**Human Check**：规则不明确，或未挡候选的存在性／适用性未确认。**NA**：确认缺文件、明确不检查，或有依据证明检查不适用；无有效 Disallow 的 No 约定优先。 |
+| **10.4 CSS／JS 是否允许抓取？** | 从 SF 结果找测试页面依赖的 CSS／JS，包括站内和必要外部资源，检查权限及响应。 | **Yes**：必要资源允许抓取且可访问。**No**：确认必要资源被挡或失效。**Human Check**：SF 抓取／导出错误，或缺少资源、关系、权限结果。**NA**：完整清单证明没有适用的链接 CSS／JS。 |
+| **10.5 特殊页面是否正确处理？** | 优先用真实 URL，按实际功能补充有限候选；确认页面类别后，检查对应策略，见下表。 | **Yes**：适用类别全部符合策略。**No**：确认存在不符合策略的页面。**NA**：类别确实不适用，写依据和范围。**Human Check**：用途或实际控制无法确认。 |
+| **10.6 是否使用小写 robots.txt？** | 验证小写 `/robots.txt` 是否返回有效文件；小写正常时不强制再试大写，也不猜服务器文件名。 | **Yes**：小写入口有效。**No**：小写内容无效，或确认只有错误大小写入口有效。**NA**：确认文件不存在，引用 10.1。**Human Check**：请求失败，无法判断。 |
+| **10.7 有没有 Sitemap 声明？** | 在完整 robots 原文中检查至少一个有效的绝对 HTTP／HTTPS `Sitemap:` URL。 | **Yes**：有有效声明。**No**：已读取文件没有有效声明。**NA**：robots 文件确认不存在。**Human Check**：原文无法完整取得。Sitemap 下载 429 单独记录，不把有效声明变成 No。 |
+
+### 10.3 按网站性质选择样本
+
+- 有真实购物功能才选择适用购物车／结账样本；企业展示站、内容站、会员站按实际功能选择搜索、筛选、账户或其他有依据的低价值路径。
+- 非电商／无站内购物功能的网站，缺购物车或结账 Disallow 不算失败，也不建议补这些规则。普通分类页和正常分页不被统一要求 Disallow。
+- 已有不适用的购物规则时，在 Checklist Findings 提醒可能为模板残留，建议确认用途后清理；不能把这些规则当作适用样本通过的依据。规则多余本身不自动产生 No；确认误挡或违反明确网站策略才列问题。
+- 完全没有有效 Disallow 仍按约定判 No；进一步验证建议必须针对实际网站功能，不推断安全泄露，也不建议添加无关规则。
+- Findings／Coverage 写清网站性质的判断依据、选定及排除类别和原因。collector 的通用候选清单只提供线索；先筛选再补查，不无限枚举。
+
+### 10.5 特殊页面策略
+
+默认策略如下，明确的网站策略优先。不统一要求所有类别 Disallow。
+
+| 类别 | 接受的处理方式 |
 | --- | --- |
-| 10.1 | 有效 robots.txt；空文件、空白、仅注释必须报问题 |
-| 10.2 | sitemap URL（或有范围的替代清单）没有被 Googlebot 规则阻挡即 Yes；NA 仅限确认没有 robots.txt 或用户明确不检查。不额外要求页面用途／内容确认 |
-| 10.3 | Agent 根据网站性质和实际功能选择适用类别；选定的有限枚举样本全部被有效规则阻挡可判 Yes；可读文件完全没有适用于 Googlebot 的非空 Disallow＝No，并报 Issue、原因及 further validate 建议 |
-| 10.4 | 必要 CSS/JS 允许抓取且可访问，明确动态资源覆盖 |
-| 10.5 | 候选路径枚举 + 真实链接补充 + 内容验证，按页面类别检查合适策略 |
-| 10.6 | 小写 `/robots.txt` 入口有效 |
-| 10.7 | robots.txt 包含有效 `Sitemap:` URL 声明 |
+| 购物车 | 有效 Disallow，或 Googlebot 能读取的 noindex |
+| 普通感谢页 | Disallow 或可读取 noindex；私人订单内容还需要访问保护 |
+| 后台 | 受保护内容／功能需要认证或授权；Disallow 不能代替保护 |
+| 账户页 | 私人内容需要授权；公开登录／注册页默认检查 Disallow 或可读取 noindex |
+| 重复内容 | 合适的 canonical、重定向或可读取 noindex；明确不必要的抓取变体可采用 Disallow |
 
-10.5 采用 **Are special pages handled appropriately?**：购物车／普通感谢页接受有效 Disallow 或可读取 noindex；后台／私人账户内容必须有授权控制；重复内容按 canonical、重定向或 noindex 判断。公开登录／注册页按约定 SEO 策略检查。不统一要求所有类别 Disallow。
+10.3 检查适用样本的规则覆盖，10.5 检查真实页面及实际控制。默认插件规则、路径名称及 HTTP 200 不能单独证明功能存在。未发现候选不能证明页面不存在。SF 的 Non-Indexable 不等于 noindex；忽略 robots 后读到 noindex，不代表 Google 能读取。不登录私人账户、不提交订单；因此无法验证的流程写 Human Check。
 
-未发现候选不能证明页面不存在。NA 必须写明原因、尝试范围和发现限制。超时、403、缺字段等无法确认时 记录缺失证据及下一步，最终 Excel 仍交付，对应项和 Issue 标 Human Check，写明缺口与人工核查动作。SF 的 Non-Indexable 不等于 noindex；忽略 robots 后读到 noindex，不代表 Google 能读取。此 flow 不执行交易、登录私人账户或完整安全扫描。
+## 完整工作流程
+
+先复用当前证据并逐项判断，交付包含全部请求项的 Excel，再安排需要用户操作的 SF 补查。配置失败、缺 sitemap 或某项缺字段，不让其他已有充分证据的项目停在 pending。图中的后续回路代表用户补充证据后的新版报告，不是自动重爬或无期限等待。
+
+```mermaid
+flowchart TD
+    A["输入网站 URL、已有文件路径和 run config"] --> B["建立本次 run<br/>记录来源、时间、范围与累计预算"]
+    B --> C["Python 获取并缓存 robots.txt<br/>保存原文、状态、跳转、错误及 Sitemap 声明"]
+    B --> D{"有适用的 SF crawl 或导出？"}
+    D -->|有| E["复用必要字段<br/>不重新加载 config"]
+    D -->|部分或没有| F["保留已有证据<br/>记录缺少的 URL、字段或资源结果"]
+    C --> G["合并当前可用证据"]
+    E --> G
+    F --> G
+
+    subgraph CHECKS["逐项检查 10.1–10.7"]
+        G --> H["10.1 文件存在与有效性<br/>10.6 小写入口<br/>10.7 Sitemap 声明"]
+        G --> I["Sitemap URL 优先<br/>缺 sitemap 时使用已有 crawl 或真实链接清单"]
+        I --> J["10.2 逐条判断有效 Googlebot 权限<br/>未被挡即可通过，不追加内容验证门槛"]
+        G --> K["Agent 判断网站性质与实际功能<br/>选择适用样本，记录排除类别及原因"]
+        K --> L["10.3 有限样本的 Disallow 覆盖<br/>非电商不强制购物车规则<br/>无有效 Disallow 按约定报 No"]
+        G --> M["10.4 SF 页面与 CSS/JS 关系<br/>检查必要资源权限及响应"]
+        K --> N["10.5 真实页面分类及适用控制<br/>Disallow、可读取 noindex、canonical、重定向或访问保护"]
+        H --> O["按项判定，保留已查证据与覆盖范围"]
+        J --> O
+        L --> O
+        M --> O
+        N --> O
+    end
+
+    O --> Y["Yes：检查范围符合规则"]
+    O --> X["No：确认问题或约定 audit 标准不符合"]
+    O --> NA["NA：符合该项不适用边界，写原因"]
+    O --> HC["Human Check：具体证据缺口<br/>写已检查、缺少或失败、下一步动作"]
+    Y --> P["写入并验证 findings<br/>缺请求项补为 Human Check，不遗漏检查"]
+    X --> P
+    NA --> P
+    HC --> P
+    P --> Q["先交付最终 Excel<br/>Checklist：全部请求项及核查说明<br/>10. Robot.txt：仅确认 No；无问题则只留表头"]
+    Q --> R{"仍需要 SF 补充证据？"}
+    R -->|不需要| DONE["本次交付完成"]
+    R -->|需要| S{"允许请求新 crawl？"}
+    S -->|否| WAIT["保留候选、缺口和已交报告<br/>接受后续已有证据，不循环 pending"]
+    S -->|是| T["SF shared config 准备<br/>全站默认 main；必要定向内容使用 targeted"]
+    T --> U{"所选 profile 已确认加载且未改变？"}
+    U -->|是| W["用户确认网站与 sitemap<br/>List 补查确认候选 URL 清单"]
+    U -->|否| V["先保存所选 config 到实际 Downloads<br/>再加载；加载失败立即给手动 Load 指引"]
+    V --> W
+    W --> RUN["用户手动 Start 并监督错误<br/>保存 crawl 或导出到实际 Downloads"]
+    RUN --> VERIFY["验证站点、时间、范围、完成状态及必要字段<br/>保留 429、错误和缺行，不当作零结果"]
+    VERIFY --> UPDATE["合并补查证据，重新判断受影响项目<br/>输出新报告，不覆盖旧文件"]
+    UPDATE -. "下一次证据更新" .-> G
+```
+
+流程图源文件：[robots-audit-workflow.mmd](assets/robots-audit-workflow.mmd)。
 
 ### 默认／插件规则的边界
 
-robots.txt 中的 add-to-cart、woocommerce 上传目录或日志路径，只作为候选线索，不证明网站有购物车、插件仍启用或敏感文件公开。区分“有规则”“测试 URL 被规则阻挡”“实际页面存在”。只有内容及真实流程证据支持后，才套用对应类别策略。完成有范围的发现且没有真实购物流程线索，或站点负责人确认不适用时，购物车子项 NA 并写明原因；已知流程、未测试候选或错误挡住验证时为 Human Check；其他类别仍独立判断。通用规则无实际负面影响，不自动生成 Issue 或建议删除。admin-ajax 的 Allow 也不单独视为后台泄露。详细规则见 [robots-rules.md](references/robots-rules.md)。
+robots.txt 中的 add-to-cart、woocommerce 上传目录或日志路径，只作为候选线索，不证明网站有购物车、插件仍启用或敏感文件公开。区分“有规则”“测试 URL 被规则阻挡”“实际页面存在”。只有内容及真实流程证据支持后，才套用对应类别策略。完成有范围的发现且没有真实购物流程线索，或站点负责人确认不适用时，购物车子项 NA 并写明原因；已知流程、未测试候选或错误挡住验证时为 Human Check；其他类别仍独立判断。通用规则无实际负面影响，不自动生成 Issue；有网站功能依据的不适用购物规则可在 Findings 提醒确认用途后清理。admin-ajax 的 Allow 也不单独视为后台泄露。详细规则见 [robots-rules.md](references/robots-rules.md)。
 
 ### 分页／分类变体
 
@@ -57,6 +135,19 @@ robots.txt 中的 add-to-cart、woocommerce 上传目录或日志路径，只作
 Result 使用 **Yes / No / NA / Human Check**。证据不足也照样输出最终 Excel，不等补查完成、不留空、不把缺证据填成 NA 或已确认 No。每个 Human Check 在 Findings 写“已检查什么＋支持的结果／数量”“缺少／失败什么”“下一步动作”，Human Check 只保留在 Checklist，不写入 `10. Robot.txt`。No 只代表确认问题，必须有关联 defect issue；若同时有缺口，保留 No 并在 Findings 追加 Human Check，不另列核查 Issue。NA 必须有原因。全部请求项目都包含在最终文件，不能只交 progress.json 或以省略项目掩盖未完成范围。evidence_gaps.json／handover 继续保留用于后续更新，报告交付不等于整体 audit 通过。两张表及既有列保持不变；Human Check 黄色标记。完整输入定义见 [report-schema.md](references/report-schema.md)。缺行或缺核查原因／动作时，通过 `--site-url` 明确启用交付补齐，补为 Human Check；`--prepared-input` 保存实际交付输入。无关字段或未确认历史 config 不阻止有独立证据的判断。
 
 文件名：`{site name}_robots_audit_{YYYY-MM-DD}.xlsx`，日期按用户时区；已有文件不覆盖。
+
+Human Check 示例仅说明写法，不是实际网站结果：
+
+> **已检查：**读取 robots.txt，整理 80 条 sitemap URL，确认其中 75 条未被挡。
+>
+> **缺少／失败：**另外 5 条权限结果因 SF 导出错误未取得。
+>
+> **下一步：**补充这 5 条结果，或验证对应 Googlebot 规则。
+>
+> **Coverage：**75／80 已验证，5 条未确认。
+
+Human Check 不进入 `10. Robot.txt`。No 同时有缺口时，问题页保留确认问题，未验证范围只写在 Checklist。没有确认问题时，问题页只保留四列表头。旧输入中的 human_check issue 会迁移到对应 Checklist Findings，保留描述、动作和地址。
+
 
 ## 使用
 
@@ -136,13 +227,3 @@ collect_robots.py 仅获取 robots 文件及生成候选，不自动验证候选
 交付补齐保留严格事实校验：不自动造 Yes／No／NA，不掩盖不正确的 check ID、缺 defect issue、非法输入或写文件失败。实际导出输入可留档，已交付文件不覆盖。collector 保存各响应的 Retry-After／Content-Type，遇 429 不自动重试；候选仍需验证。
 
 10.3 的样本 Yes 是规则匹配结果，不证明枚举页实际存在；10.5 仍独立检查真实功能和处理策略。没有 Disallow 的 No 是本次约定 audit 标准下的配置问题，不宣称已有泄露；修复建议先核实实际需要限制的 URL，再配置合适规则。一般分类页和正常分页不因样本检查被统一要求 Disallow。
-
-### 10.3 按网站性质选择样本
-
-Agent 先看首页／导航／页面内容、crawl／sitemap 的真实路由和用户提供的功能信息，再选择适用样本。例如电商有真实购物线索时才选择购物车／结账；企业展示站没有电商功能就不要求这些类别；内容站重点考虑有依据的站内搜索、筛选或后台路径；会员站考虑实际账户及相关低价值路径。普通分类页和正常分页继续保留。
-
-Findings／Coverage 记录网站性质的判断依据、选了哪些类别、排除了哪些及原因。collector 生成的通用候选清单不是强制检查清单，先按适用性筛选再补查。插件默认规则不能单独证明功能存在。没有有效 Disallow 的 No 规则保留，但 further validate 和修复建议必须按网站性质写，不建议无购物功能的网站新增购物车规则。
-
-问题页固定命名 **10. Robot.txt**，只列已确认 No 的问题。全部结果为 Human Check 时，这一页只有表头；已检查内容、缺口与人工动作保留在 Checklist。兼容旧输入中的 human_check issue：迁移到对应 Checklist Findings 后过滤，不丢失描述、动作或地址。
-
-非电商／无站内购物功能的网站，缺购物车或结账 Disallow 不算失败，也不建议补这些规则。若已有购物相关规则，Agent 在 Checklist Findings 说明与已知功能不匹配、可能为模板残留，建议确认用途后清理；这些规则不能充当适用样本通过的依据。仅有不适用规则不自动产生 No／问题行；确认误挡或违反明确网站策略时才列入 `10. Robot.txt`。
