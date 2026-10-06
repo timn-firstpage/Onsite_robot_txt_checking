@@ -1,5 +1,7 @@
 # Onsite Robots.txt Checking
 
+<p align="center"><img src="assets/onsite-audit-cover.png" alt="Onsite audit cover showing HTTPS security, website inspection, crawl connections, hostname redirects, and an audit report" width="640"></p>
+
 独立的 `onsite-audit-robots` skill，用于检查 10.1–10.7，并生成 Excel。输入网站 URL、已有 Screaming Frog crawl／导出及 run config。
 
 ## 与 HTTPS flow 共用配置
