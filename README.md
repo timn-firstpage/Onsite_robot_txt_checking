@@ -43,7 +43,7 @@
 
 - 有真实购物功能才选择适用购物车／结账样本；企业展示站、内容站、会员站按实际功能选择搜索、筛选、账户或其他有依据的低价值路径。
 - 非电商／无站内购物功能的网站，缺购物车或结账 Disallow 不算失败，也不建议补这些规则。普通分类页和正常分页不被统一要求 Disallow。
-- **确认有不适用的购物／其他模板残留规则：10.3 判 No／X，并写入 `10. Robot.txt`。** 列明实际规则、网站不适用的依据及针对性的清理动作；不要求先证明误挡或安全问题。只是疑似、用途未确认时，写 Human Check，仅留 Checklist。即使其他适用样本全部被挡，确认模板残留仍优先判 No。
+- **确认有不适用的购物／其他模板残留规则：10.3 判 No／X，并写入 `10. Robot.txt`。** Findings 直接点明残留规则及不适用原因，Coverage 放检查来源和范围；问题页列明实际规则、网站不适用的依据及针对性的清理动作；不要求先证明误挡或安全问题。只是疑似、用途未确认时，写 Human Check，仅留 Checklist。即使其他适用样本全部被挡，确认模板残留仍优先判 No。
 - 完全没有有效 Disallow 仍按约定判 No；进一步验证建议必须针对实际网站功能，不推断安全泄露，也不建议添加无关规则。
 - Findings／Coverage 写清网站性质的判断依据、选定及排除类别和原因。collector 的通用候选清单只提供线索；先筛选再补查，不无限枚举。
 
@@ -83,16 +83,17 @@ flowchart TD
     B --> D{"有适用的 SF crawl 或导出？"}
     D -->|有| E["复用必要字段<br/>不重新加载 config"]
     D -->|部分或没有| F["保留已有证据<br/>记录缺少的 URL、字段或资源结果"]
-    C --> G["合并当前可用证据"]
-    E --> G
-    F --> G
+    C --> STATIC["先检查已有导出<br/>静态身份、响应或跳转缺口：有限只读补查<br/>不足或失败保留缺口，不循环等待"]
+    E --> STATIC
+    F --> STATIC
+    STATIC --> G["合并当前可用证据"]
 
     subgraph CHECKS["逐项检查 10.1–10.7"]
         G --> H["10.1 文件存在与有效性<br/>10.6 小写入口<br/>10.7 Sitemap 声明"]
         G --> I["Sitemap URL 优先<br/>缺 sitemap 时使用已有 crawl 或真实链接清单"]
         I --> J["10.2 逐条判断有效 Googlebot 权限<br/>未被挡即可通过，不追加内容验证门槛"]
         G --> K["Agent 判断网站性质与实际功能<br/>选择适用样本，记录排除类别及原因"]
-        K --> L["10.3 有限样本的 Disallow 覆盖<br/>非电商不强制购物车规则<br/>无有效 Disallow 或确认模板残留报 No"]
+        K --> L["10.3 有限样本的 Disallow 覆盖<br/>非电商不强制购物车规则<br/>无有效 Disallow 或确认模板残留报 No<br/>Findings 点明残留规则及不适用原因"]
         G --> M["10.4 确认 CSS/JS 身份与公开源页面关系<br/>私有页专用资源记录排除；共用资源保留<br/>有效 blocked 不因 HTTP 200 变 allowed"]
         K --> N["10.5 真实页面分类及适用控制<br/>Disallow、可读取 noindex、canonical、重定向或访问保护"]
         H --> O["按项判定，保留已查证据与覆盖范围"]
@@ -111,7 +112,7 @@ flowchart TD
     NA --> P
     HC --> P
     P --> Q["先交付最终 Excel<br/>Checklist：全部请求项及核查说明<br/>10. Robot.txt：仅确认 No；无问题则只留表头"]
-    Q --> R{"仍需要 SF 补充证据？"}
+    Q --> R{"剩余证据必须依赖 SF／渲染？"}
     R -->|不需要| DONE["本次交付完成"]
     R -->|需要| S{"允许请求新 crawl？"}
     S -->|否| WAIT["保留候选、缺口和已交报告<br/>接受后续已有证据，不循环 pending"]
@@ -167,13 +168,13 @@ Human Check 不进入 `10. Robot.txt`。No 同时有缺口时，问题页保留�
 | 当前情况 | 执行方式 |
 | --- | --- |
 | 已有适用 crawl／导出 | 核对站点、时间、范围、完成状态和必要字段后直接复用；不用 load config，不要求全部历史设置可见 |
-| 部分证据可用 | 保留支持的判断，只补缺少的 export／特定 URL／内容证据，不强制重爬全站 |
+| 部分证据可用 | 先检查现有导出；只缺静态页面身份、响应或跳转时，做有限只读脚本补查；剩余证据确实需要 SF 字段或 JS 渲染时才请求重跑 |
 | 正在爬取 | 不覆盖配置、不打断；先交包含 Human Check 的最终 Excel 和 checkpoint，你完成并交文件后更新 |
-| 没有适用证据、允许补爬 | shared skill 默认选择 main；必要定向补查用 targeted profile。你确认网站和 sitemap，手动 Start、监督并保存到实际 Downloads |
+| 仍缺必须由 SF／渲染取得的证据、允许补爬 | shared skill 默认选择 main；必要定向补查用 targeted profile。你确认网站和 sitemap，手动 Start、监督并保存到实际 Downloads |
 | native／独立 config load 失败 | 立即提供手动 UI Load + sitemap 指引，保留原错误；不 retry native、不循环 pending、不用 sf_crawl(config_path) 偷启动 |
 | shared skill 未安装 | 提供安装链接或对应手动流程；不假称已调用，也不阻止复用适用文件 |
 
-`source.allow_new_crawl` 只允许请求新的 discovery／List 补爬，不能授权 agent 自动启动；false 时保留候选和证据缺口。已确认配置加载且未改变就跳过 load，HTTPS 和 robots 共用同一会话准备记录。你加入网站 sitemap 后不重新加载通用 profile。List 补查用候选清单，不要求重复全站 sitemap 流程。
+`source.allow_new_crawl` 只允许请求新的 discovery／List 补爬，不能授权 agent 自动启动；false 时仍可在 `checks.live_checks=true` 下对选定 URL 做有限只读静态补查；剩余缺口保留候选和说明。已确认配置加载且未改变就跳过 load，HTTPS 和 robots 共用同一会话准备记录。你加入网站 sitemap 后不重新加载通用 profile。List 补查用候选清单，不要求重复全站 sitemap 流程。
 
 Main 默认 JS、关闭全站 HTML 存储；targeted profile 保存必要补查的 source/rendered HTML。已有静态证据无需因此重爬。robots 的小范围发现上限不修改 shared main，配置文件不保证 connector 能导出所需内容。
 
@@ -215,7 +216,9 @@ collect_robots.py 仅获取 robots 文件及生成候选，不自动验证候选
 
 先复用主 crawl 的 URL/状态/指令/canonical/资源关系，仅对无法判断的候选补充 HTML。robots 的 1,000 页、深度 5、分页 10 页/分类变体 5 个等限制，只用于 robots 补充发现，不写入其他任务的主 crawl/default profile。主 crawl 的范围及预算由整合 agent 决定，不能拿 robots 模板的 200 个补查请求数字作为全站 crawl URL 上限。共享 usage 仍累计，不暗中增加总体预算。
 
-补查通过 shared skill 准备独立 List Mode profile/crawl ID，由你手动运行。默认每批 25 个必要 URL，按需要继续下一批而不是 25 个后停止；共享 targeted profile 存 source/rendered HTML，已有内容证据直接复用。预算不足记录缺口，其他不依赖此内容的任务继续。切换回主配置时沿用共享准备记录并保留实际 sitemap，不自动恢复通用 profile 覆盖你的网站设置。JSON 设置不会自动改变本机 SF。
+补查顺序为：**现有导出 → 有限只读静态检查 → 必要时才由 SF／JS 渲染补查**。静态检查只针对有限的选定公开 URL，记录状态、跳转、最终地址及用于识别页面的内容；遵守累计预算、速率、作用域和 `checks.live_checks`，不递归爬站、不执行登录／表单／购物车等动作，也不把 HTTP 200 当作 Googlebot 允许。JS 空壳或静态内容不足时留下具体缺口。collector 本身不执行页面补查，由 agent 在上述边界内完成；详见 [补查边界](references/delivery-boundaries.md#evidence-retrieval-order-and-bounded-static-follow-up)。
+
+只有剩余证据需要 SF 字段／资源关系或 JS 渲染时，才通过 shared skill 准备独立 List Mode profile/crawl ID，由你手动运行。默认每批 25 个必要 URL，按需要继续下一批而不是 25 个后停止；共享 targeted profile 存 source/rendered HTML，已有内容证据直接复用。预算不足记录缺口，其他不依赖此内容的任务继续。切换回主配置时沿用共享准备记录并保留实际 sitemap，不自动恢复通用 profile 覆盖你的网站设置。JSON 设置不会自动改变本机 SF。
 
 ## 判断边界与交付修正
 

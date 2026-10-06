@@ -7,12 +7,12 @@ This filename remains the entry for older documentation links. Profile loading a
 | Situation | Action |
 | --- | --- |
 | Suitable existing crawl/exports | Verify site, time, scope, completion and check-specific fields; reuse directly. No profile load or exhaustive historical-settings gate. |
-| Partly usable evidence | Keep supported checks and request only missing exports/targeted evidence; missing exports do not necessarily require recrawling. |
+| Partly usable evidence | Keep supported checks; inspect existing exports, then use permitted finite read-only static identity/response/redirect checks. Only remaining SF-specific/rendering gaps need a new user-run crawl. |
 | Active user crawl | Do not load over it or interrupt it. Deliver the current final Excel with Human Check and a checkpoint now; update after user handover, without indefinite polling. |
-| No suitable evidence; follow-up permitted | Invoke the installed shared skill for preparation. Main is selected automatically for a full crawl; targeted profile only for necessary content/response follow-ups. |
+| SF-specific/rendering evidence still needed; follow-up permitted | Invoke the installed shared skill for preparation. Main is selected automatically for a full crawl; targeted profile only for necessary content/response follow-ups. |
 | Shared skill absent | Give its install link or equivalent manual Load, sitemap, Start and save instructions. Do not claim it ran; suitable existing files remain usable. |
 
-source.allow_new_crawl determines whether this flow can request a new discovery/List crawl. It never authorizes agent-started crawling. When false, archive candidates and exact gaps, request existing exports or an explicit change to the scope instruction; do not silently start or bypass it with another crawler. Direct robots collection is separately controlled by checks.live_checks and its request budget.
+source.allow_new_crawl determines whether this flow can request a new discovery/List crawl. It never authorizes agent-started crawling. When false, archive candidates and exact gaps, request existing exports or an explicit change to the scope instruction; do not silently start or bypass it with another crawler. Direct robots collection and finite selected-URL static identity/response/redirect checks are separately controlled by checks.live_checks and the shared request budget; see [retrieval boundaries](delivery-boundaries.md#evidence-retrieval-order-and-bounded-static-follow-up). A false allow_new_crawl does not disable these permitted static checks or authorize recursive crawling.
 
 Resolve bundled profile paths from the actual installed shared skill on the SF host. Respect explicit user profile overrides; invalid overrides require correction, not fallback. Reliable evidence of the intended loaded, unchanged profile allows skipping load; a filename alone does not. HTTPS and robots reuse the same preparation record/session rather than each reloading main.
 

@@ -8,7 +8,7 @@ Use config.template.json for robots-only runs. Integrated configs may carry addi
 | run_id; source.* | Agent selects completed SF crawl/exports. allow_new_crawl permits requesting user-run discovery/List follow-up, never automated Start. crawl_config_path/content_crawl_config_path are optional user overrides for shared main/targeted profiles; null selects bundled defaults only when preparation is needed. crawl_settings_file records observations with source and relevant crawl ID/time, not a global setup gate; collector reads none of these profile fields |
 | mcp.* | Agent uses the actual server/allowed-base/tool schema; collector does not connect to MCP |
 | checks.robots_txt | Agent routes this flow; explicitly false prevents collector execution |
-| checks.live_checks | Collector skips network and records unresolved status when false; agent must also avoid new live URL checks |
+| checks.live_checks | Collector skips network and records unresolved status when false; agent must also avoid new live URL checks. When true, finite scoped static identity/response/redirect follow-ups are permitted under delivery-boundaries.md, independently of allow_new_crawl; this does not authorize a discovery crawl |
 | budget.max_live_requests, max_redirect_hops, timeout_seconds | Collector enforces its requests/redirects/timeouts; agent applies the same limits to other live operations |
 | budget.max_mcp_calls, poll_interval_seconds, max_poll_calls | Agent enforces against cumulative usage; collector has no MCP/poll operations |
 | budget.max_preview_rows, max_preview_chars | Agent limits chat previews, not evidence exports |
@@ -21,7 +21,7 @@ Use config.template.json for robots-only runs. Integrated configs may carry addi
 | robots.temporary_inventory_page_limit, temporary_inventory_depth_limit | Agent caps robots supplemental discovery only, never the shared primary crawl or another task; collector does not crawl the site |
 | robots.dynamic_resources | Agent verifies needed dynamic resource evidence; false does not change shared main's JS default or suppress applicable findings. Shared preparation handles necessary follow-up; collector does not render JavaScript |
 | robots.pagination_pages_per_series, variants_per_category | Agent caps robots supplemental series/variant samples only; these do not restrict another task or the shared primary crawl |
-| robots.content_evidence_strategy, content_batch_size | Agent uses targeted HTML collection (default targeted), in staged batches of 25 unresolved URLs; batch size is not a total cap. Collector does not launch/apply SF profiles |
+| robots.content_evidence_strategy, content_batch_size | Agent first reuses exports, then performs permitted bounded static checks where sufficient. Remaining SF-specific/rendering needs use targeted HTML collection (default targeted), in staged batches of 25 unresolved URLs; batch size is not a total cap. Collector does not launch/apply SF profiles |
 
 Agent-owned settings are execution instructions, not a proxy that automatically enforces SF server limits. Record actual coverage and consumption in manifest/usage. One integrated agent shares cumulative usage and operates on a Spider serially.
 

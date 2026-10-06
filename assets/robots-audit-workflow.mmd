@@ -4,16 +4,17 @@ flowchart TD
     B --> D{"有适用的 SF crawl 或导出？"}
     D -->|有| E["复用必要字段<br/>不重新加载 config"]
     D -->|部分或没有| F["保留已有证据<br/>记录缺少的 URL、字段或资源结果"]
-    C --> G["合并当前可用证据"]
-    E --> G
-    F --> G
+    C --> STATIC["先检查已有导出<br/>静态身份、响应或跳转缺口：有限只读补查<br/>不足或失败保留缺口，不循环等待"]
+    E --> STATIC
+    F --> STATIC
+    STATIC --> G["合并当前可用证据"]
 
     subgraph CHECKS["逐项检查 10.1–10.7"]
         G --> H["10.1 文件存在与有效性<br/>10.6 小写入口<br/>10.7 Sitemap 声明"]
         G --> I["Sitemap URL 优先<br/>缺 sitemap 时使用已有 crawl 或真实链接清单"]
         I --> J["10.2 逐条判断有效 Googlebot 权限<br/>未被挡即可通过，不追加内容验证门槛"]
         G --> K["Agent 判断网站性质与实际功能<br/>选择适用样本，记录排除类别及原因"]
-        K --> L["10.3 有限样本的 Disallow 覆盖<br/>非电商不强制购物车规则<br/>无有效 Disallow 或确认模板残留报 No"]
+        K --> L["10.3 有限样本的 Disallow 覆盖<br/>非电商不强制购物车规则<br/>无有效 Disallow 或确认模板残留报 No<br/>Findings 点明残留规则及不适用原因"]
         G --> M["10.4 确认 CSS/JS 身份与公开源页面关系<br/>私有页专用资源记录排除；共用资源保留<br/>有效 blocked 不因 HTTP 200 变 allowed"]
         K --> N["10.5 真实页面分类及适用控制<br/>Disallow、可读取 noindex、canonical、重定向或访问保护"]
         H --> O["按项判定，保留已查证据与覆盖范围"]
@@ -32,7 +33,7 @@ flowchart TD
     NA --> P
     HC --> P
     P --> Q["先交付最终 Excel<br/>Checklist：全部请求项及核查说明<br/>10. Robot.txt：仅确认 No；无问题则只留表头"]
-    Q --> R{"仍需要 SF 补充证据？"}
+    Q --> R{"剩余证据必须依赖 SF／渲染？"}
     R -->|不需要| DONE["本次交付完成"]
     R -->|需要| S{"允许请求新 crawl？"}
     S -->|否| WAIT["保留候选、缺口和已交报告<br/>接受后续已有证据，不循环 pending"]

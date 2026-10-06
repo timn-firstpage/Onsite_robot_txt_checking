@@ -60,7 +60,7 @@ Preserve original crawl time, incomplete exports, missing material fields and ac
 
 10.2 NA reasons are confirmed absent robots or explicit user waiver; missing page subtypes do not establish NA. For 10.3 record site nature, evidence and selected/excluded families with reasons; do not require cart/checkout on non-shopping sites. No-Disallow is an audit-standard configuration issue with site-appropriate further validation, not proof of private exposure.
 
-Confirmed unused/inapplicable template directives belong in issues as kind=defect linked to 10.3 No and are exported to 10. Robot.txt. Description records the exact groups/directives and the site evidence confirming they are unnecessary; How to Fix removes only those confirmed remnants and rechecks important URLs/resources. This is a configuration finding, not proof of private exposure or ranking harm. Unverified template purpose remains Human Check only in Checklist.
+Confirmed unused/inapplicable template directives belong in issues as kind=defect linked to 10.3 No and are exported to 10. Robot.txt. Checklist Findings must name the confirmed residual directives and briefly explain their inapplicability (not merely say "template issue"); Coverage records sources and discovery scope. Description records the exact groups/directives and the site evidence confirming they are unnecessary; How to Fix removes only those confirmed remnants and rechecks important URLs/resources. This is a configuration finding, not proof of private exposure or ranking harm. Unverified template purpose remains Human Check only in Checklist.
 
 ## Findings emphasis
 
