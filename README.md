@@ -75,6 +75,8 @@ Result 严格使用 Yes / No / NA。未确认或未执行的检查写入 evidenc
 
 Main 默认 JS、关闭全站 HTML 存储；targeted profile 保存必要补查的 source/rendered HTML。已有静态证据无需因此重爬。robots 的小范围发现上限不修改 shared main，配置文件不保证 connector 能导出所需内容。
 
+手动 Load 前，Agent 先把选定 `.seospiderconfig` 保存到 SF 电脑的实际 Downloads 并验证，再给完整路径让你加载和检查 sitemap。同名不同内容不覆盖；跨电脑或权限导致无法保存时，先给下载／复制步骤并说明未完成保存。配置文件与之后保存的 `.seospider` 结果分别交接。
+
 保存后仍需验证文件与数据：`.seospider` 要由 SF 成功 load 并检查字段／导出；CSV 要有可读结构、完整行和必要字段。sf-handover.json 只记录准备与用户确认，不是 audit 通过证明。记录网站 429 与 MCP 429 的来源、Retry-After、受影响范围；错误或缺行不能当零结果。
 
 不要求补齐所有 Googlebot／robots／rendering config。有效响应、header、meta robots、canonical 和可独立解释的 live robots 规则支持对应判断；只有结论依赖 SF 抓取行为且缺等效证据才核实相关设置。10.1／10.6／10.7 可以从直接 robots 证据继续，配置失败不代表这些项失败。其他缺口必须写明具体 URL／字段／结论和补充动作，不能只写“native app control failed”。缺少有效 sitemap 要说明发现范围，但不阻止其他有证据的检查。
