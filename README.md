@@ -52,9 +52,9 @@ robots.txt 中的 add-to-cart、woocommerce 上传目录或日志路径，只作
 | Sheet | Columns |
 | --- | --- |
 | Checklist | Check · Result · Findings · Coverage |
-| Issues | Issue · Issue Description · How to Fix · Address |
+| 10. Robot.txt | Issue · Issue Description · How to Fix · Address |
 
-Result 使用 **Yes / No / NA / Human Check**。证据不足也照样输出最终 Excel，不等补查完成、不留空、不把缺证据填成 NA 或已确认 No。每个 Human Check 在 Findings 写“已检查什么＋支持的结果／数量”“缺少／失败什么”“下一步动作”，并在 Issues 写 `Human Check`、具体缺少的证据和人工动作；它是核查事项，不是已确认网站缺陷。No 只代表确认问题，必须有关联 defect issue；若同时有缺口，保留 No 并在 Findings 追加 Human Check，另列 human_check issue。NA 必须有原因。全部请求项目都包含在最终文件，不能只交 progress.json 或以省略项目掩盖未完成范围。evidence_gaps.json／handover 继续保留用于后续更新，报告交付不等于整体 audit 通过。两张表及既有列保持不变；Human Check 黄色标记。完整输入定义见 [report-schema.md](references/report-schema.md)。缺行或缺核查 Issue 时，通过 `--site-url` 明确启用交付补齐，补为 Human Check；`--prepared-input` 保存实际交付输入。无关字段或未确认历史 config 不阻止有独立证据的判断。
+Result 使用 **Yes / No / NA / Human Check**。证据不足也照样输出最终 Excel，不等补查完成、不留空、不把缺证据填成 NA 或已确认 No。每个 Human Check 在 Findings 写“已检查什么＋支持的结果／数量”“缺少／失败什么”“下一步动作”，Human Check 只保留在 Checklist，不写入 `10. Robot.txt`。No 只代表确认问题，必须有关联 defect issue；若同时有缺口，保留 No 并在 Findings 追加 Human Check，不另列核查 Issue。NA 必须有原因。全部请求项目都包含在最终文件，不能只交 progress.json 或以省略项目掩盖未完成范围。evidence_gaps.json／handover 继续保留用于后续更新，报告交付不等于整体 audit 通过。两张表及既有列保持不变；Human Check 黄色标记。完整输入定义见 [report-schema.md](references/report-schema.md)。缺行或缺核查原因／动作时，通过 `--site-url` 明确启用交付补齐，补为 Human Check；`--prepared-input` 保存实际交付输入。无关字段或未确认历史 config 不阻止有独立证据的判断。
 
 文件名：`{site name}_robots_audit_{YYYY-MM-DD}.xlsx`，日期按用户时区；已有文件不覆盖。
 
@@ -109,7 +109,7 @@ collect_robots.py 仅获取 robots 文件及生成候选，不自动验证候选
 
 ## 验证范围
 
-离线测试使用合成证据，验证分类、候选生成、两张表字段、NA 原因、No/Issues 关联、URL/query 保留、公式注入防护与禁止覆盖。未执行真实网站或 SF MCP 端到端测试，不能把样例当客户 audit。规则依据见 [robots-rules.md](references/robots-rules.md)，本机 MCP 事实以实际工具 schema 为准。
+离线测试使用合成证据，验证分类、候选生成、两张表字段、NA 原因、No／确认问题页关联、URL/query 保留、公式注入防护与禁止覆盖。未执行真实网站或 SF MCP 端到端测试，不能把样例当客户 audit。规则依据见 [robots-rules.md](references/robots-rules.md)，本机 MCP 事实以实际工具 schema 为准。
 
 ## 共用 crawl 的性能与任务隔离
 
@@ -123,8 +123,8 @@ collect_robots.py 仅获取 robots 文件及生成候选，不自动验证候选
 
 | 情况 | 判断方式 |
 | --- | --- |
-| 缺候选响应／内容、429、预算耗尽 | Human Check + 缺口 + 人工动作，照样导出 |
-| 已确认问题，但另有未验证范围 | 保留 No 和 defect issue，另列 Human Check |
+| 缺候选响应／内容、429、预算耗尽 | Human Check + 缺口 + 人工动作只写 Checklist，照样导出 |
+| 已确认问题，但另有未验证范围 | 保留 No 和 defect issue，Human Check 只追加在 Checklist |
 | 10.2 的 NA | 仅限 robots.txt 确认缺失或用户明确不检查；没有某类页面不把该项判 NA |
 | 10.5 某类别真正不适用，或完成 scoped discovery 后无对象／真实流程线索 | NA + 原因 + 范围；不能把未测试当不存在 |
 | CSS／JS | 同站及外部必要资源都检查；SF crawl/export error 或缺资源结果为 Human Check，并说明已查及未查范围 |
@@ -142,3 +142,5 @@ collect_robots.py 仅获取 robots 文件及生成候选，不自动验证候选
 Agent 先看首页／导航／页面内容、crawl／sitemap 的真实路由和用户提供的功能信息，再选择适用样本。例如电商有真实购物线索时才选择购物车／结账；企业展示站没有电商功能就不要求这些类别；内容站重点考虑有依据的站内搜索、筛选或后台路径；会员站考虑实际账户及相关低价值路径。普通分类页和正常分页继续保留。
 
 Findings／Coverage 记录网站性质的判断依据、选了哪些类别、排除了哪些及原因。collector 生成的通用候选清单不是强制检查清单，先按适用性筛选再补查。插件默认规则不能单独证明功能存在。没有有效 Disallow 的 No 规则保留，但 further validate 和修复建议必须按网站性质写，不建议无购物功能的网站新增购物车规则。
+
+问题页固定命名 **10. Robot.txt**，只列已确认 No 的问题。全部结果为 Human Check 时，这一页只有表头；已检查内容、缺口与人工动作保留在 Checklist。兼容旧输入中的 human_check issue：迁移到对应 Checklist Findings 后过滤，不丢失描述、动作或地址。

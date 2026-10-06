@@ -29,7 +29,7 @@ REVIEW_ACTIONS = {
 }
 SHEETS = {
     "Checklist": (["Check", "Result", "Findings", "Coverage"], ["check", "result", "findings", "coverage"]),
-    "Issues": (["Issue", "Issue Description", "How to Fix", "Address"], ["issue", "description", "how_to_fix", "address"]),
+    "10. Robot.txt": (["Issue", "Issue Description", "How to Fix", "Address"], ["issue", "description", "how_to_fix", "address"]),
 }
 
 
@@ -64,7 +64,6 @@ def complete_for_export(data, site_url):
     parsed = urlsplit(site_url)
     if parsed.scheme not in {'http', 'https'} or not parsed.hostname or parsed.username or parsed.password or any(c.isspace() for c in site_url):
         raise ValueError('site_url must be the actual absolute HTTP(S) audited URL without credentials')
-    origin = f'{parsed.scheme}://{parsed.netloc}'
     result = copy.deepcopy(data)
     if 'overview' in result:
         raise ValueError('Legacy schema must be migrated before completion')
@@ -109,14 +108,10 @@ def complete_for_export(data, site_url):
             if not row['human_check_reason']:
                 row['human_check_reason'] = reason
         action = '\n'.join(gap['next_action'] for gap in check_gaps) or REVIEW_ACTIONS[cid]
-        linked = any(isinstance(issue, dict) and issue.get('kind') == 'human_check' and cid in issue.get('check_ids', []) for issue in issues)
-        if not linked:
-            issues.append({'check_ids': [cid], 'kind': 'human_check', 'issue': 'Human Check: ' + CHECK_NAMES[cid],
-                           'description': 'Already checked / available evidence: ' + row.get('findings', 'No completed findings supplied.')
-                           + '\nCoverage: ' + row.get('coverage', 'No verified scope supplied.')
-                           + '\nMissing/failed: ' + reason + '\nThis is an evidence gap, not a confirmed website defect.',
-                           'how_to_fix': action, 'addresses': [origin + '/robots.txt' if cid in {'10.1', '10.6', '10.7'} else origin + '/']})
-    normalize(result)
+        row['human_check_action'] = action
+    completed_rows, defects = normalize(result)
+    result['checklist'] = completed_rows
+    result['issues'] = defects
     return result
 
 
@@ -152,7 +147,7 @@ def normalize(data):
         ids[row["id"]] = row
     if set(ids) != set(requested):
         raise ValueError("Final report must include every requested check; do not silently omit unresolved checks")
-    unique, linked, human_linked = {}, set(), set()
+    unique, linked = {}, set()
     for source in issues:
         row = dict(source)
         required_text(row, ["issue", "description", "how_to_fix"])
@@ -164,17 +159,19 @@ def normalize(data):
         if not isinstance(refs, list) or not refs or any(not isinstance(cid, str) or cid not in ids or ids[cid]["result"] not in permitted for cid in refs):
             raise ValueError("Defects link to No; human_check issues link to No or Human Check")
         if kind == "human_check":
-            if not row["issue"].startswith("Human Check"):
-                row["issue"] = "Human Check: " + row["issue"]
-            human_linked.update(refs)
+            # Compatibility: move legacy review rows to Checklist, never the defect tab.
+            marker = 'Human Check: ' + row['issue'] + '\n' + row['description'] + '\nNext action: ' + row['how_to_fix']
+            addresses = row.get('addresses', [])
+            if not isinstance(addresses, list) or any(not isinstance(url, str) for url in addresses):
+                raise ValueError('Legacy review addresses must be a list of strings')
+            if addresses:
+                marker += '\nReview addresses: ' + '\n'.join(addresses)
             for cid in refs:
-                if ids[cid]["result"] == "No":
-                    marker = row["issue"] + "\n" + row["description"] + "\n" + row["how_to_fix"]
-                    if marker not in ids[cid]["findings"]:
-                        ids[cid]["findings"] += "\n" + marker
-                    required_text(ids[cid], ["findings"])
-        else:
-            linked.update(refs)
+                if marker not in ids[cid]['findings']:
+                    ids[cid]['findings'] += '\n' + marker
+                required_text(ids[cid], ['findings'])
+            continue
+        linked.update(refs)
         required_text(row, ["issue"])
         addresses = row.get("addresses")
         if not isinstance(addresses, list) or not addresses or any(not isinstance(url, str) or not re.match(r"^https?://[^\s/]+(?:/[^\s]*)?$", url) for url in addresses):
@@ -187,20 +184,26 @@ def normalize(data):
         else:
             unique[identity] = row
     if {cid for cid, row in ids.items() if row["result"] == "No"} != linked:
-        raise ValueError("Every No requires a confirmed-defect Issues row")
-    if not {cid for cid, row in ids.items() if row["result"] == "Human Check"} <= human_linked:
-        raise ValueError("Every Human Check requires a human_check Issues row")
+        raise ValueError("Every No requires a confirmed-defect row in 10. Robot.txt")
     for gap in gaps:
         if not isinstance(gap, dict):
             raise ValueError("Each evidence gap must be an object")
         required_text(gap, ["check", "missing", "next_action"])
         cid = gap["check"]
-        if cid not in human_linked:
-            raise ValueError("Every evidence gap must link to a human_check issue and an unresolved check")
+        if cid not in ids or ids[cid]["result"] not in {"No", "Human Check"}:
+            raise ValueError("Every evidence gap must reference a No or Human Check Checklist row")
         marker = "Human Check: " + gap["missing"] + "\n" + gap["next_action"]
         if marker not in ids[cid]["findings"]:
             ids[cid]["findings"] += "\n" + marker
         required_text(ids[cid], ["findings"])
+    for cid, row in ids.items():
+        if row['result'] == 'Human Check' or row.get('human_check_action'):
+            action = row.get('human_check_action', REVIEW_ACTIONS[cid])
+            required_text({'action': action}, ['action'])
+            marker = 'Next action: ' + action
+            if marker not in row['findings']:
+                row['findings'] += '\n' + marker
+            required_text(row, ['findings'])
     return sorted(ids.values(), key=lambda r: tuple(map(int, r["id"].split(".")))), list(unique.values())
 
 
@@ -217,8 +220,8 @@ def build(data, output, site_url=None):
     output.parent.mkdir(parents=True, exist_ok=True)
     wb = Workbook()
     wb.remove(wb.active)
-    datasets = {"Checklist": checklist, "Issues": issues}
-    widths = {"Checklist": [64, 12, 90, 64], "Issues": [42, 90, 80, 90]}
+    datasets = {"Checklist": checklist, "10. Robot.txt": issues}
+    widths = {"Checklist": [64, 14, 90, 64], "10. Robot.txt": [42, 90, 80, 90]}
     for title, (headers, fields) in SHEETS.items():
         sheet = wb.create_sheet(title)
         sheet.append(headers)
@@ -277,7 +280,7 @@ if __name__ == "__main__":
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--site-name", required=True)
     parser.add_argument("--date", required=True, help="YYYY-MM-DD in the user's timezone")
-    parser.add_argument("--site-url", help="Actual audited URL: explicitly complete missing checks/review issues as Human Check")
+    parser.add_argument("--site-url", help="Actual audited URL: explicitly complete missing checks/review details in Checklist as Human Check")
     parser.add_argument("--prepared-input", type=Path, help="Archive completed report input to a new JSON path (requires --site-url)")
     args = parser.parse_args()
     data = json.loads(args.input.read_text(encoding="utf-8-sig"))
