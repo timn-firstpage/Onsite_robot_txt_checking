@@ -16,6 +16,25 @@ def fixture():
 
 
 class ReportTests(unittest.TestCase):
+    def test_partial_evidence_survives_in_checklist_and_generated_review_issue(self):
+        data={'requested_checks':['10.2'],'checklist':[{
+            'id':'10.2','check':'10.2 Important URLs','result':'Human Check',
+            'findings':'Read robots and checked 75 sitemap URLs: allowed.',
+            'coverage':'75/80 permissions checked; five unresolved.'}],
+            'issues':[], 'evidence_gaps':[{
+                'check':'10.2','missing':'Five effective permission results unavailable after SF export error.',
+                'next_action':'Obtain the five unresolved permission results.'}]}
+        prepared=complete_for_export(data,'https://example.com/')
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            output=Path(directory)/'audit.xlsx';build(prepared,output)
+            wb=load_workbook(output)
+            self.assertIn('75 sitemap URLs',wb['Checklist']['C2'].value)
+            self.assertIn('five unresolved',wb['Checklist']['D2'].value)
+            self.assertIn('75 sitemap URLs',wb['Issues']['B2'].value)
+            self.assertIn('Five effective permission results unavailable',wb['Issues']['B2'].value)
+            self.assertIn('five unresolved permission results',wb['Issues']['C2'].value)
+            wb.close()
+
     def test_delivery_completion_exports_missing_rows_without_inventing_passes(self):
         data=fixture(); del data['requested_checks']; data['checklist'].pop(1)
         original=copy.deepcopy(data)

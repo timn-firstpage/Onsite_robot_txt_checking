@@ -20,9 +20,9 @@ CHECK_NAMES = {
 }
 REVIEW_ACTIONS = {
     '10.1': 'Verify the lowercase robots response and its actual text; record status and redirects.',
-    '10.2': 'Identify intended public pages and verify effective Googlebot rules and final responses.',
-    '10.3': 'Identify actual should-not-crawl URLs and their policy, then verify effective rules.',
-    '10.4': 'Obtain page/resource relationships for necessary CSS/JS and verify rules and responses.',
+    '10.2': 'Complete the sitemap/fallback URL inventory and verify effective Googlebot permissions for unresolved URLs; retain already-checked results.',
+    '10.3': 'Verify effective Googlebot rules for the selected finite samples and whether non-empty Disallow applies; further validate unblocked actual targets before adding restrictions.',
+    '10.4': 'Identify SF crawl/export errors or missing CSS/JS rows, relationships or permission results; obtain only the missing evidence and retain tested resources.',
     '10.5': 'Verify candidate purpose and the applicable control without logging in or submitting orders.',
     '10.6': 'Verify the lowercase endpoint; do not infer casing from an unknown server filename.',
     '10.7': 'Inspect the raw robots text for a valid absolute Sitemap declaration.',
@@ -103,7 +103,7 @@ def complete_for_export(data, site_url):
             row['result'] = 'Human Check'
         if row.get('result') != 'Human Check' and not (row.get('result') == 'No' and check_gaps):
             continue
-        reason = '\n'.join(gap['missing'] for gap in check_gaps) or row.get('human_check_reason') or row.get('findings') or 'Required evidence was not supplied.'
+        reason = '\n'.join(gap['missing'] for gap in check_gaps) or row.get('human_check_reason') or ('Required evidence for ' + cid + ' is incomplete; see the manual verification action.')
         if row['result'] == 'Human Check':
             row.setdefault('human_check_reason', reason)
             if not row['human_check_reason']:
@@ -112,7 +112,9 @@ def complete_for_export(data, site_url):
         linked = any(isinstance(issue, dict) and issue.get('kind') == 'human_check' and cid in issue.get('check_ids', []) for issue in issues)
         if not linked:
             issues.append({'check_ids': [cid], 'kind': 'human_check', 'issue': 'Human Check: ' + CHECK_NAMES[cid],
-                           'description': reason + '\nThis is an evidence gap, not a confirmed website defect.',
+                           'description': 'Already checked / available evidence: ' + row.get('findings', 'No completed findings supplied.')
+                           + '\nCoverage: ' + row.get('coverage', 'No verified scope supplied.')
+                           + '\nMissing/failed: ' + reason + '\nThis is an evidence gap, not a confirmed website defect.',
                            'how_to_fix': action, 'addresses': [origin + '/robots.txt' if cid in {'10.1', '10.6', '10.7'} else origin + '/']})
     normalize(result)
     return result

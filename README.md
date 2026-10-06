@@ -28,8 +28,8 @@
 | Check | 标准 |
 | --- | --- |
 | 10.1 | 有效 robots.txt；空文件、空白、仅注释必须报问题 |
-| 10.2 | sitemap／临时清单中的重要页面可抓取且可访问。Yes 表示没有误挡，避免原问句产生反向含义 |
-| 10.3 | 实际确认应限制抓取的 URL 被有效规则阻挡；没有 Disallow 时说明实际情况 |
+| 10.2 | sitemap URL（或有范围的替代清单）没有被 Googlebot 规则阻挡即 Yes；NA 仅限确认没有 robots.txt 或用户明确不检查。不额外要求页面用途／内容确认 |
+| 10.3 | 选定的有限枚举样本全部被有效规则阻挡可判 Yes；可读文件完全没有适用于 Googlebot 的非空 Disallow＝No，并报 Issue、原因及 further validate 建议 |
 | 10.4 | 必要 CSS/JS 允许抓取且可访问，明确动态资源覆盖 |
 | 10.5 | 候选路径枚举 + 真实链接补充 + 内容验证，按页面类别检查合适策略 |
 | 10.6 | 小写 `/robots.txt` 入口有效 |
@@ -54,7 +54,7 @@ robots.txt 中的 add-to-cart、woocommerce 上传目录或日志路径，只作
 | Checklist | Check · Result · Findings · Coverage |
 | Issues | Issue · Issue Description · How to Fix · Address |
 
-Result 使用 **Yes / No / NA / Human Check**。证据不足也照样输出最终 Excel，不等补查完成、不留空、不把缺证据填成 NA 或已确认 No。每个 Human Check 在 Findings 写原因，并在 Issues 写 `Human Check`、具体缺少的证据和人工动作；它是核查事项，不是已确认网站缺陷。No 只代表确认问题，必须有关联 defect issue；若同时有缺口，保留 No 并在 Findings 追加 Human Check，另列 human_check issue。NA 必须有原因。全部请求项目都包含在最终文件，不能只交 progress.json 或以省略项目掩盖未完成范围。evidence_gaps.json／handover 继续保留用于后续更新，报告交付不等于整体 audit 通过。两张表及既有列保持不变；Human Check 黄色标记。完整输入定义见 [report-schema.md](references/report-schema.md)。缺行或缺核查 Issue 时，通过 `--site-url` 明确启用交付补齐，补为 Human Check；`--prepared-input` 保存实际交付输入。无关字段或未确认历史 config 不阻止有独立证据的判断。
+Result 使用 **Yes / No / NA / Human Check**。证据不足也照样输出最终 Excel，不等补查完成、不留空、不把缺证据填成 NA 或已确认 No。每个 Human Check 在 Findings 写“已检查什么＋支持的结果／数量”“缺少／失败什么”“下一步动作”，并在 Issues 写 `Human Check`、具体缺少的证据和人工动作；它是核查事项，不是已确认网站缺陷。No 只代表确认问题，必须有关联 defect issue；若同时有缺口，保留 No 并在 Findings 追加 Human Check，另列 human_check issue。NA 必须有原因。全部请求项目都包含在最终文件，不能只交 progress.json 或以省略项目掩盖未完成范围。evidence_gaps.json／handover 继续保留用于后续更新，报告交付不等于整体 audit 通过。两张表及既有列保持不变；Human Check 黄色标记。完整输入定义见 [report-schema.md](references/report-schema.md)。缺行或缺核查 Issue 时，通过 `--site-url` 明确启用交付补齐，补为 Human Check；`--prepared-input` 保存实际交付输入。无关字段或未确认历史 config 不阻止有独立证据的判断。
 
 文件名：`{site name}_robots_audit_{YYYY-MM-DD}.xlsx`，日期按用户时区；已有文件不覆盖。
 
@@ -125,11 +125,14 @@ collect_robots.py 仅获取 robots 文件及生成候选，不自动验证候选
 | --- | --- |
 | 缺候选响应／内容、429、预算耗尽 | Human Check + 缺口 + 人工动作，照样导出 |
 | 已确认问题，但另有未验证范围 | 保留 No 和 defect issue，另列 Human Check |
-| 真正不适用，或完成 scoped discovery 后无对象／真实流程线索 | NA + 原因 + 范围；不能把未测试当不存在 |
-| CSS／JS | 同站及外部必要资源都检查；缺资源清单不等于无资源 |
+| 10.2 的 NA | 仅限 robots.txt 确认缺失或用户明确不检查；没有某类页面不把该项判 NA |
+| 10.5 某类别真正不适用，或完成 scoped discovery 后无对象／真实流程线索 | NA + 原因 + 范围；不能把未测试当不存在 |
+| CSS／JS | 同站及外部必要资源都检查；SF crawl/export error 或缺资源结果为 Human Check，并说明已查及未查范围 |
 | 一个类别已有充分的合适控制 | 不强制收集所有替代控制；字段按具体判断需要获取 |
 | 已知交易后感谢页／后台 403 | 不交易、不登录；无法确认控制时 Human Check，不猜不存在或已保护 |
 | 其他 bot 被挡，但 Googlebot 的证据完整 | 默认 Google SEO 判断继续；只对用户指定的额外渠道套用要求 |
 | 有有效 Sitemap 声明，但 sitemap 请求 429 | 10.7 声明检查仍可 Yes；另说明 sitemap 健康／发现覆盖缺口 |
 
 交付补齐保留严格事实校验：不自动造 Yes／No／NA，不掩盖不正确的 check ID、缺 defect issue、非法输入或写文件失败。实际导出输入可留档，已交付文件不覆盖。collector 保存各响应的 Retry-After／Content-Type，遇 429 不自动重试；候选仍需验证。
+
+10.3 的样本 Yes 是规则匹配结果，不证明枚举页实际存在；10.5 仍独立检查真实功能和处理策略。没有 Disallow 的 No 是本次约定 audit 标准下的配置问题，不宣称已有泄露；修复建议先核实实际需要限制的 URL，再配置合适规则。一般分类页和正常分页不因样本检查被统一要求 Disallow。
