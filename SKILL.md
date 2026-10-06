@@ -7,6 +7,20 @@ description: Audit robots.txt configuration and special-page handling using Pyth
 
 Audit checks 10.1–10.7 for a supplied site. Use Python for raw robots collection/candidate preparation, Screaming Frog for crawl permissions and directives, and agent reasoning for classification and policy decisions. Use bounded read-only HTTP checks for missing static page identity, response or redirect evidence before requesting a new SF run; follow the static follow-up boundary in delivery-boundaries.md. Do not replace SF with a custom noindex/canonical crawler.
 
+## Fixed checklist item names
+
+Preserve these exact user-provided names in the report and checklist tables. Prefix with the check ID; do not paraphrase, shorten, correct grammar or translate the item name. Report language applies to Findings/Coverage, not these titles. Existing Yes/No/NA/Human Check decision rules still apply; in 10.2, Yes means no unintended blocking.
+
+| ID | Check |
+| --- | --- |
+| 10.1 | Does a robots.txt document exist? |
+| 10.2 | Are sections of the site that we want indexed, being disallowed with robots.txt? |
+| 10.3 | Are disallow blocks in place for URLs that Google shouldn't be crawling? |
+| 10.4 | Are we allowing bot access to CSS and JS documents? |
+| 10.5 | Are the following pages disallow? shopping carts, thank you, admin, duplicate content, account pages. |
+| 10.6 | Is the robots.txt called robots.txt, and not ROBOTS.TXT? |
+| 10.7 | Is there a link in the robots.txt file to the sitemap index/sitemap? |
+
 ## Inputs and shared configuration
 
 Use [config.template.json](config.template.json), or the user's integrated config with robots settings. Read [configuration ownership](references/config.md): share connection/runtime/site/source/budget/output settings, but keep per-flow check settings and dependency declarations. The standalone template omits HTTPS-only keys and unimplemented collector switches. This skill executes only robots checks, even when the shared config includes enabled HTTPS keys. Set checks.robots_txt=true. Preserve the shared MCP endpoint, allowed-base directory, existing crawl and AUDIT_PYTHON runtime; never copy a different machine's absolute paths.

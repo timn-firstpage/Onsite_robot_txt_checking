@@ -31,13 +31,13 @@
 
 | Item | 怎么检查 | 结果判断 |
 | --- | --- | --- |
-| **10.1 robots.txt 是否存在？** | 请求小写 `/robots.txt`，保存状态、跳转和原文，检查有效指令、空文件及错误 HTML。 | **Yes**：有效文件。**No**：确认不存在、内容无效、空白或仅注释。**Human Check**：403、429、超时或截断等使结果无法确认。 |
-| **10.2 重要页面有没有被误挡？** | 提取 sitemap URL，逐条判断有效 Googlebot 规则。没有可用 sitemap 时，用已有 crawl／真实链接建立替代清单；不额外要求页面分类、noindex 或内容验证。 | **Yes**：检查范围中的 URL 全部未被挡。**No**：确认有 URL 被挡，列地址及匹配规则。**NA**：robots.txt 确认不存在，或用户明确不用检查。**Human Check**：清单／权限证据不完整，写明已查和未查范围。 |
-| **10.3 有没有合适的 Disallow？** | Agent 先根据实际内容、导航、功能和用户信息判断网站性质，选择适用的有限样本，再检查有效 Googlebot 规则。购物车、结账、账户等是可选类别，不是所有网站的必选项目。 | **Yes**：选定的适用样本全部被挡，且没有确认模板残留等其他问题，注明样本范围。**No**：确认有不适用／未清理的模板规则；可读 robots 完全没有适用于 Googlebot 的非空 Disallow；或确认应限制的真实 URL 未被挡。确认模板残留写入 `10. Robot.txt`，列依据及清理方法；无 Disallow 写 further validate 建议。**Human Check**：规则不明确，或未挡候选的存在性／适用性未确认。**NA**：确认缺文件、明确不检查，或有依据证明检查不适用；无有效 Disallow 的 No 约定优先。 |
-| **10.4 CSS／JS 是否允许抓取？** | 从 SF 类型／Content Type／真实 stylesheet或script引用确认 CSS／JS，关联需要索引的公开页面，检查有效 Googlebot 权限及响应。HTML login/reset 页面本身不当作 CSS／JS；仅供已确认私有／不需索引页使用的资源记录排除，共用的公开页资源仍检查。 | **Yes**：适用公开页资源确认允许抓取且可用。**No**：必要公开页资源有效被挡或失效；HTTP 200 不会把 robots blocked 变成 allowed。**Human Check**：SF 抓取／导出错误，或缺少资源、关系、权限结果。**NA**：完整清单证明没有适用的链接 CSS／JS。 |
-| **10.5 特殊页面是否正确处理？** | 优先用真实 URL，按实际功能补充有限候选；确认页面类别后，检查对应策略，见下表。 | **Yes**：适用类别全部符合策略。**No**：确认存在不符合策略的页面。**NA**：类别确实不适用，写依据和范围。**Human Check**：用途或实际控制无法确认。 |
-| **10.6 是否使用小写 robots.txt？** | 验证小写 `/robots.txt` 是否返回有效文件；小写正常时不强制再试大写，也不猜服务器文件名。 | **Yes**：小写入口有效。**No**：小写内容无效，或确认只有错误大小写入口有效。**NA**：确认文件不存在，引用 10.1。**Human Check**：请求失败，无法判断。 |
-| **10.7 有没有 Sitemap 声明？** | 在完整 robots 原文中检查至少一个有效的绝对 HTTP／HTTPS `Sitemap:` URL。 | **Yes**：有有效声明。**No**：已读取文件没有有效声明。**NA**：robots 文件确认不存在。**Human Check**：原文无法完整取得。Sitemap 下载 429 单独记录，不把有效声明变成 No。 |
+| **10.1 Does a robots.txt document exist?** | 请求小写 `/robots.txt`，保存状态、跳转和原文，检查有效指令、空文件及错误 HTML。 | **Yes**：有效文件。**No**：确认不存在、内容无效、空白或仅注释。**Human Check**：403、429、超时或截断等使结果无法确认。 |
+| **10.2 Are sections of the site that we want indexed, being disallowed with robots.txt?** | 提取 sitemap URL，逐条判断有效 Googlebot 规则。没有可用 sitemap 时，用已有 crawl／真实链接建立替代清单；不额外要求页面分类、noindex 或内容验证。 | **Yes**：检查范围中的 URL 全部未被挡。**No**：确认有 URL 被挡，列地址及匹配规则。**NA**：robots.txt 确认不存在，或用户明确不用检查。**Human Check**：清单／权限证据不完整，写明已查和未查范围。 |
+| **10.3 Are disallow blocks in place for URLs that Google shouldn't be crawling?** | Agent 先根据实际内容、导航、功能和用户信息判断网站性质，选择适用的有限样本，再检查有效 Googlebot 规则。购物车、结账、账户等是可选类别，不是所有网站的必选项目。 | **Yes**：选定的适用样本全部被挡，且没有确认模板残留等其他问题，注明样本范围。**No**：确认有不适用／未清理的模板规则；可读 robots 完全没有适用于 Googlebot 的非空 Disallow；或确认应限制的真实 URL 未被挡。确认模板残留写入 `10. Robot.txt`，列依据及清理方法；无 Disallow 写 further validate 建议。**Human Check**：规则不明确，或未挡候选的存在性／适用性未确认。**NA**：确认缺文件、明确不检查，或有依据证明检查不适用；无有效 Disallow 的 No 约定优先。 |
+| **10.4 Are we allowing bot access to CSS and JS documents?** | 从 SF 类型／Content Type／真实 stylesheet或script引用确认 CSS／JS，关联需要索引的公开页面，检查有效 Googlebot 权限及响应。HTML login/reset 页面本身不当作 CSS／JS；仅供已确认私有／不需索引页使用的资源记录排除，共用的公开页资源仍检查。 | **Yes**：适用公开页资源确认允许抓取且可用。**No**：必要公开页资源有效被挡或失效；HTTP 200 不会把 robots blocked 变成 allowed。**Human Check**：SF 抓取／导出错误，或缺少资源、关系、权限结果。**NA**：完整清单证明没有适用的链接 CSS／JS。 |
+| **10.5 Are the following pages disallow? shopping carts, thank you, admin, duplicate content, account pages.** | 优先用真实 URL，按实际功能补充有限候选；确认页面类别后，检查对应策略，见下表。 | **Yes**：适用类别全部符合策略。**No**：确认存在不符合策略的页面。**NA**：类别确实不适用，写依据和范围。**Human Check**：用途或实际控制无法确认。 |
+| **10.6 Is the robots.txt called robots.txt, and not ROBOTS.TXT?** | 验证小写 `/robots.txt` 是否返回有效文件；小写正常时不强制再试大写，也不猜服务器文件名。 | **Yes**：小写入口有效。**No**：小写内容无效，或确认只有错误大小写入口有效。**NA**：确认文件不存在，引用 10.1。**Human Check**：请求失败，无法判断。 |
+| **10.7 Is there a link in the robots.txt file to the sitemap index/sitemap?** | 在完整 robots 原文中检查至少一个有效的绝对 HTTP／HTTPS `Sitemap:` URL。 | **Yes**：有有效声明。**No**：已读取文件没有有效声明。**NA**：robots 文件确认不存在。**Human Check**：原文无法完整取得。Sitemap 下载 429 单独记录，不把有效声明变成 No。 |
 
 ### 10.3 按网站性质选择样本
 
@@ -46,6 +46,8 @@
 - **确认有不适用的购物／其他模板残留规则：10.3 判 No／X，并写入 `10. Robot.txt`。** Findings 直接点明残留规则及不适用原因，Coverage 放检查来源和范围；问题页列明实际规则、网站不适用的依据及针对性的清理动作；不要求先证明误挡或安全问题。只是疑似、用途未确认时，写 Human Check，仅留 Checklist。即使其他适用样本全部被挡，确认模板残留仍优先判 No。
 - 完全没有有效 Disallow 仍按约定判 No；进一步验证建议必须针对实际网站功能，不推断安全泄露，也不建议添加无关规则。
 - Findings／Coverage 写清网站性质的判断依据、选定及排除类别和原因。collector 的通用候选清单只提供线索；先筛选再补查，不无限枚举。
+
+检查项目名称固定使用上述英文原文，保留原有标点和语法，不改写、不缩短，也不因报告使用中文而翻译。代码会按编号输出固定名称；Findings／Coverage 使用易懂的报告语言。
 
 ### 10.5 特殊页面策略
 

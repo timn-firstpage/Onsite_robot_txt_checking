@@ -14,7 +14,7 @@ The second sheet contains only confirmed defects linked to No. Human Check detai
   "requested_checks": ["10.1", "10.5"],
   "checklist": [
     {"id":"10.1","check":"10.1 Does a robots.txt document exist?","result":"No","findings":"robots.txt 返回 200，但内容为空。","findings_bold":["内容为空"],"coverage":"检查主站 /robots.txt；保存原始内容。"},
-    {"id":"10.5","check":"10.5 Are special pages handled appropriately?","result":"Human Check","findings":"Human Check：尚未确认这些页面的用途，以及是否设有需要的抓取、收录或登录限制。","human_check_reason":"尚未确认这些页面的用途，以及是否设有需要的抓取、收录或登录限制。","human_check_action":"查看这些页面的公开内容，确认用途及相应限制；不要登录私人账户或提交订单。","coverage":"已读取 robots 和已有 crawl，整理特殊页候选；候选页面未验证，未执行交易或登录。"}
+    {"id":"10.5","check":"10.5 Are the following pages disallow? shopping carts, thank you, admin, duplicate content, account pages.","result":"Human Check","findings":"Human Check：尚未确认这些页面的用途，以及是否设有需要的抓取、收录或登录限制。","human_check_reason":"尚未确认这些页面的用途，以及是否设有需要的抓取、收录或登录限制。","human_check_action":"查看这些页面的公开内容，确认用途及相应限制；不要登录私人账户或提交订单。","coverage":"已读取 robots 和已有 crawl，整理特殊页候选；候选页面未验证，未执行交易或登录。"}
   ],
   "issues": [
     {"check_ids":["10.1"],"kind":"defect","issue":"Empty robots.txt","description":"robots.txt 可访问，但未包含有效指令。按约定 audit 标准判为配置问题，不代表安全漏洞。","how_to_fix":"核实网站需求后配置合适规则，保留重要页面及必要资源的抓取权限。","addresses":["https://example.com/robots.txt"]}
@@ -22,6 +22,8 @@ The second sheet contains only confirmed defects linked to No. Human Check detai
   "evidence_gaps": [{"check":"10.5","missing":"尚未确认这些页面的用途，以及是否设有需要的抓取、收录或登录限制。","next_action":"查看这些页面的公开内容，确认用途及相应限制；不要登录私人账户或提交订单。"}]
 }
 ```
+
+Check titles are the exact original user-provided names listed in SKILL.md, prefixed by their IDs. Do not paraphrase, shorten, correct grammar or translate them, even in a Chinese report. The builder uses CHECK_NAMES to enforce the original titles regardless of the supplied check text. Findings and Coverage still use the requested report language.
 
 Include every requested check exactly once; requested_checks defaults to all seven. Narrow the list only for an explicitly partial request. Results are Yes/No/NA/Human Check, never blank. Unknown evidence is Human Check, not NA/Yes/No. Always deliver final Excel without waiting for unresolved evidence. The builder validates structure, not substantive claims.
 

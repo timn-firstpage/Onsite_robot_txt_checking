@@ -281,6 +281,17 @@ class ReportTests(unittest.TestCase):
         data.pop('evidence_gaps')
         self.assertEqual(complete_for_export(data,'https://example.com/')['checklist'][0]['human_check_action'],action)
 
+    def test_report_preserves_original_item_names_for_supplied_and_missing_rows(self):
+        from build_report import CHECK_NAMES
+        data=fixture()
+        prepared=complete_for_export(data,'https://example.com/')
+        for row in prepared['checklist']:
+            self.assertEqual(row['check'],row['id']+' '+CHECK_NAMES[row['id']])
+        self.assertEqual(CHECK_NAMES['10.2'], 'Are sections of the site that we want indexed, being disallowed with robots.txt?')
+        self.assertEqual(CHECK_NAMES['10.5'], 'Are the following pages disallow? shopping carts, thank you, admin, duplicate content, account pages.')
+        rows,_=normalize(fixture())
+        self.assertTrue(all(row['check']==row['id']+' '+CHECK_NAMES[row['id']] for row in rows))
+
     def test_duplicate_check_and_legacy_schema(self):
         data=fixture(); data['checklist'].append(copy.deepcopy(data['checklist'][0]))
         with self.assertRaises(ValueError): normalize(data)

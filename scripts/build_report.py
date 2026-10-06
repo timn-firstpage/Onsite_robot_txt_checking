@@ -11,13 +11,14 @@ from urllib.parse import urlsplit
 CHECK_IDS = {f"10.{i}" for i in range(1, 8)}
 CHECK_NAMES = {
     '10.1': 'Does a robots.txt document exist?',
-    '10.2': 'Are important pages allowed for Googlebot?',
-    '10.3': 'Are appropriate crawl restrictions in place?',
-    '10.4': 'Are required CSS and JS allowed?',
-    '10.5': 'Are special pages handled appropriately?',
-    '10.6': 'Is the lowercase robots.txt endpoint valid?',
-    '10.7': 'Is a sitemap declared in robots.txt?',
+    '10.2': 'Are sections of the site that we want indexed, being disallowed with robots.txt?',
+    '10.3': "Are disallow blocks in place for URLs that Google shouldn't be crawling?",
+    '10.4': 'Are we allowing bot access to CSS and JS documents?',
+    '10.5': 'Are the following pages disallow? shopping carts, thank you, admin, duplicate content, account pages.',
+    '10.6': 'Is the robots.txt called robots.txt, and not ROBOTS.TXT?',
+    '10.7': 'Is there a link in the robots.txt file to the sitemap index/sitemap?',
 }
+
 REVIEW_ACTIONS = {
     '10.1': 'Open /robots.txt and check whether it loads and contains robots rules or a sitemap link.',
     '10.2': 'Check whether robots.txt allows Google to crawl the pages still awaiting review.',
@@ -174,6 +175,8 @@ def normalize(data):
             raise ValueError('findings_bold must be a list of non-empty exact text phrases')
         if row["id"] not in CHECK_IDS or row["id"] in ids:
             raise ValueError("Unknown/duplicate check ID")
+        # Checklist titles are fixed user-supplied text, independent of report language.
+        row["check"] = row["id"] + " " + CHECK_NAMES[row["id"]]
         if row.get("result") not in {"Yes", "No", "NA", "Human Check"}:
             raise ValueError("Final Result must be Yes, No, NA or Human Check")
         reason_field = {"NA": "na_reason", "Human Check": "human_check_reason"}.get(row["result"])
