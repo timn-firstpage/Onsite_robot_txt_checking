@@ -150,11 +150,13 @@ Findings 使用 Excel 单元格内的**局部加粗**，提高扫描可读性：
 
 文件名：`{site name}_robots_audit_{YYYY-MM-DD}.xlsx`，日期按用户时区；已有文件不覆盖。
 
+Findings 面向不熟悉 SEO 的读者：**先说发现了什么，再说具体原因；需要补查才写下一步。** 避免只写「缺少 inlinks」「有效权限证据不足」等内部术语；例如写「尚未确认哪些前台页面使用这些文件，请补充页面与文件的引用资料」。保留必要的路径和规则，说明其含义，通常一至三句；数量、来源和范围留在 Coverage。[各项写法示例](references/report-schema.md#plain-language-findings)。
+
 Human Check 示例仅说明写法，不是实际网站结果：
 
 | Findings | Coverage |
 | --- | --- |
-| **Human Check：**SF 导出缺少权限结果。**下一步：**补导出或验证对应 Googlebot 规则。 | 来源：robots.txt、sitemap、SF 导出；75／80 条权限已验证允许，5 条未确认。 |
+| **Human Check：**导出资料不完整，尚未确认剩余页面是否被 robots.txt 阻挡。**下一步：**补充这些页面的抓取权限结果。 | 来源：robots.txt、sitemap、SF 导出；75／80 条权限已验证允许，5 条未确认。 |
 
 Human Check 不进入 `10. Robot.txt`。No 同时有缺口时，问题页保留确认问题，未验证范围只写在 Checklist。没有确认问题时，问题页只保留四列表头。旧输入中的 human_check issue 描述及动作迁移到 Checklist Findings，地址放 Coverage；原始输入保留用于追溯。
 

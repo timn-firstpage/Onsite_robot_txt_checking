@@ -19,14 +19,15 @@ CHECK_NAMES = {
     '10.7': 'Is a sitemap declared in robots.txt?',
 }
 REVIEW_ACTIONS = {
-    '10.1': 'Verify the lowercase robots response and its actual text; record status and redirects.',
-    '10.2': 'Complete the sitemap/fallback URL inventory and verify effective Googlebot permissions for unresolved URLs; retain already-checked results.',
-    '10.3': 'Use actual site evidence to select applicable sample families and record exclusions; verify effective Googlebot rules and non-empty Disallow, then further validate relevant targets before adding restrictions. Do not require cart/checkout on non-shopping sites.',
-    '10.4': 'Identify SF crawl/export errors or missing CSS/JS rows, relationships or permission results; obtain only the missing evidence and retain tested resources.',
-    '10.5': 'Verify candidate purpose and the applicable control without logging in or submitting orders.',
-    '10.6': 'Verify the lowercase endpoint; do not infer casing from an unknown server filename.',
-    '10.7': 'Inspect the raw robots text for a valid absolute Sitemap declaration.',
+    '10.1': 'Open /robots.txt and check whether it loads and contains robots rules or a sitemap link.',
+    '10.2': 'Check whether robots.txt allows Google to crawl the pages still awaiting review.',
+    '10.3': 'Identify which pages should be kept out of crawling, then check whether robots.txt blocks them.',
+    '10.4': 'Check which public pages use the affected style or script files and whether Google can fetch those files.',
+    '10.5': 'Confirm what the affected pages are used for and whether the required crawl, indexing or login controls are in place.',
+    '10.6': 'Check whether the lowercase /robots.txt address loads the correct file.',
+    '10.7': 'Check whether robots.txt contains a complete sitemap link, starting with http:// or https://.',
 }
+
 SHEETS = {
     "Checklist": (["Check", "Result", "Findings", "Coverage"], ["check", "result", "findings", "coverage"]),
     "10. Robot.txt": (["Issue", "Issue Description", "How to Fix", "Address"], ["issue", "description", "how_to_fix", "address"]),
@@ -128,8 +129,8 @@ def complete_for_export(data, site_url):
     for cid in requested:
         if cid not in ids:
             row = {'id': cid, 'check': cid + ' ' + CHECK_NAMES[cid], 'result': 'Human Check',
-                   'findings': 'No agent-reviewed decision supplied for this requested check.',
-                   'coverage': 'Not verified; no completed scope supplied.'}
+                   'findings': 'There is not enough information to confirm this result.',
+                   'coverage': 'No completed checks were recorded for this item.'}
             rows.append(row)
             ids[cid] = row
         row = ids[cid]
@@ -139,7 +140,7 @@ def complete_for_export(data, site_url):
             row['result'] = 'Human Check'
         if row.get('result') != 'Human Check' and not (row.get('result') == 'No' and check_gaps):
             continue
-        reason = '\n'.join(gap['missing'] for gap in check_gaps) or row.get('human_check_reason') or ('Required evidence for ' + cid + ' is incomplete; see the manual verification action.')
+        reason = '\n'.join(gap['missing'] for gap in check_gaps) or row.get('human_check_reason') or 'There is not enough information to confirm this result.'
         if row['result'] == 'Human Check':
             row.setdefault('human_check_reason', reason)
             if not row['human_check_reason']:

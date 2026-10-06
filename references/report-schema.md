@@ -14,12 +14,12 @@ The second sheet contains only confirmed defects linked to No. Human Check detai
   "requested_checks": ["10.1", "10.5"],
   "checklist": [
     {"id":"10.1","check":"10.1 Does a robots.txt document exist?","result":"No","findings":"robots.txt 返回 200，但内容为空。","findings_bold":["内容为空"],"coverage":"检查主站 /robots.txt；保存原始内容。"},
-    {"id":"10.5","check":"10.5 Are special pages handled appropriately?","result":"Human Check","findings":"Human Check：缺少候选响应、内容及适用控制证据。","human_check_reason":"缺少候选响应、内容及适用控制证据。","human_check_action":"人工核对候选的响应、用途及适用控制，保存只读证据；不执行订单或私人账户登录。","coverage":"已读取 robots 和已有 crawl，整理特殊页候选；候选页面未验证，未执行交易或登录。"}
+    {"id":"10.5","check":"10.5 Are special pages handled appropriately?","result":"Human Check","findings":"Human Check：尚未确认这些页面的用途，以及是否设有需要的抓取、收录或登录限制。","human_check_reason":"尚未确认这些页面的用途，以及是否设有需要的抓取、收录或登录限制。","human_check_action":"查看这些页面的公开内容，确认用途及相应限制；不要登录私人账户或提交订单。","coverage":"已读取 robots 和已有 crawl，整理特殊页候选；候选页面未验证，未执行交易或登录。"}
   ],
   "issues": [
     {"check_ids":["10.1"],"kind":"defect","issue":"Empty robots.txt","description":"robots.txt 可访问，但未包含有效指令。按约定 audit 标准判为配置问题，不代表安全漏洞。","how_to_fix":"核实网站需求后配置合适规则，保留重要页面及必要资源的抓取权限。","addresses":["https://example.com/robots.txt"]}
   ],
-  "evidence_gaps": [{"check":"10.5","missing":"候选响应、内容及适用控制证据","next_action":"人工核对候选并保存响应／指令／用途证据。"}]
+  "evidence_gaps": [{"check":"10.5","missing":"尚未确认这些页面的用途，以及是否设有需要的抓取、收录或登录限制。","next_action":"查看这些页面的公开内容，确认用途及相应限制；不要登录私人账户或提交订单。"}]
 }
 ```
 
@@ -65,3 +65,25 @@ Confirmed unused/inapplicable template directives belong in issues as kind=defec
 ## Findings emphasis
 
 Checklist Findings supports real Excel rich-text bold inside each cell. It automatically emphasizes labels such as 已检查、结论、缺少／失败、下一步动作、排除原因、Human Check, Already checked and Next action. For unstructured text it emphasizes a short leading sentence when available. An optional `findings_bold` array selects exact existing text phrases for key conclusions, blocked causes or exclusions. Example: `["缺少前台引用关系", "仅供登录页使用，已排除"]`, provided those phrases actually occur in findings. No new Excel column is added. Unmatched phrases have no effect; malformed arrays require input correction. Do not insert Markdown `**` markers or bold the entire cell. Text, URLs, line breaks, result values and confirmed-defect-only sheet behavior remain preserved. Reloading without rich-text support still returns the original plain Findings text.
+
+## Plain-language Findings
+
+Write for a client who does not know SEO or Screaming Frog. Lead with the current conclusion; explain its specific reason in familiar words. For Human Check, say what cannot yet be confirmed and what information/action will resolve it. Keep the Result values unchanged. Normally use one to three short sentences. Counts, sources, dates, sampling and checked/unchecked inventories belong in Coverage. Keep full technical proof in the evidence files or Issue Description.
+
+Retain a path or directive when it identifies the problem, but explain what it does. Avoid unexplained SF, inlinks, effective permissions, applicable families, control evidence and "further validate". Do not replace precise limits with stronger claims: crawlable is not indexed; blocked is not broken; a login gate is not proof that all private functions are secure. Default script messages are English fallbacks; the agent must write/review Findings and follow-up actions in the requested report language before delivery.
+
+Illustrative wording only; use each statement only when supported by the actual evidence:
+
+| Situation | Plain-language Findings |
+| --- | --- |
+| 10.1 valid file | robots.txt 可以正常打开，包含有效的网站抓取设置。 |
+| 10.2 checked pages allowed | robots.txt 没有阻止 Google 抓取本次检查的重要页面。 |
+| 10.3 confirmed cart-rule remnant | 发现无用的购物车规则 `/*?add-to-cart=`：已确认本站没有购物功能，也不需要保留这条限制。 |
+| 10.4 required public asset blocked | robots.txt 阻止 Google 读取首页需要的样式文件 `/assets/site.css`，可能影响页面显示。 |
+| 10.4 source relationship unknown | 尚未确认这些文件是否被前台页面使用。请补充显示哪些页面使用这些文件的导出资料。 |
+| 10.5 protected route verified | 本次检查的后台入口会先要求登录，未显示受保护内容。 |
+| 10.6 valid lowercase endpoint | 小写地址 `/robots.txt` 可以正常打开。 |
+| 10.7 declaration present | robots.txt 已列出网站地图链接。 |
+| SF export incomplete | 导出资料不完整，暂时无法确认剩余页面是否被 robots.txt 阻挡。请补充这些页面的抓取权限结果。 |
+
+Use selective Excel bold for the main conclusion or concrete problem, not the entire paragraph. These are writing examples, not fixed findings to paste without checking.
