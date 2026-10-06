@@ -81,7 +81,7 @@ class ReportTests(unittest.TestCase):
     def test_partial_evidence_and_actions_stay_in_checklist_without_review_issue(self):
         data={'requested_checks':['10.2'],'checklist':[{
             'id':'10.2','check':'10.2 Important URLs','result':'Human Check',
-            'findings':'Read robots and checked 75 sitemap URLs: allowed.',
+            'findings':'Human Check: SF export is incomplete.',
             'coverage':'75/80 permissions checked; five unresolved.'}],
             'issues':[], 'evidence_gaps':[{
                 'check':'10.2','missing':'Five effective permission results unavailable after SF export error.',
@@ -90,7 +90,8 @@ class ReportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
             output=Path(directory)/'audit.xlsx';build(prepared,output)
             wb=load_workbook(output)
-            self.assertIn('75 sitemap URLs',wb['Checklist']['C2'].value)
+            self.assertNotIn('75',wb['Checklist']['C2'].value)
+            self.assertIn('75/80',wb['Checklist']['D2'].value)
             self.assertIn('five unresolved',wb['Checklist']['D2'].value)
             self.assertIn('Five effective permission results unavailable',wb['Checklist']['C2'].value)
             self.assertIn('five unresolved permission results',wb['Checklist']['C2'].value)
@@ -258,7 +259,27 @@ class ReportTests(unittest.TestCase):
         self.assertIn('Human Check',rows[0]['findings'])
         self.assertIn('Check secondary origin',rows[0]['findings'])
         self.assertEqual(len(issues),1)
-        self.assertIn('https://www.example.com/robots.txt',rows[0]['findings'])
+        self.assertNotIn('https://www.example.com/robots.txt',rows[0]['findings'])
+        self.assertIn('https://www.example.com/robots.txt',rows[0]['coverage'])
+
+    def test_concise_findings_deduplicates_gap_and_preserves_custom_action(self):
+        reason='Public resource inlinks are missing.'
+        action='Export public resource inlinks.'
+        data={'requested_checks':['10.4'],'checklist':[{
+            'id':'10.4','check':'10.4 CSS/JS','result':'Human Check',
+            'findings':'Human Check: '+reason, 'human_check_reason':reason,
+            'human_check_action':action,
+            'coverage':'SF export: six login assets checked; public source scope unresolved.'}],
+            'issues':[], 'evidence_gaps':[{'check':'10.4','missing':reason,'next_action':action}]}
+        prepared=complete_for_export(data,'https://example.com/')
+        row=prepared['checklist'][0]
+        self.assertEqual(row['findings'].count(reason),1)
+        self.assertEqual(row['findings'].count(action),1)
+        self.assertNotIn('six login assets',row['findings'])
+        self.assertEqual(row['coverage'],data['checklist'][0]['coverage'])
+        self.assertEqual(complete_for_export(prepared,'https://example.com/'),prepared)
+        data.pop('evidence_gaps')
+        self.assertEqual(complete_for_export(data,'https://example.com/')['checklist'][0]['human_check_action'],action)
 
     def test_duplicate_check_and_legacy_schema(self):
         data=fixture(); data['checklist'].append(copy.deepcopy(data['checklist'][0]))

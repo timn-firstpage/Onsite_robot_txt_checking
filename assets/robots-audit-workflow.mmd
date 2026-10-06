@@ -26,7 +26,7 @@ flowchart TD
     O --> Y["Yes：检查范围符合规则"]
     O --> X["No：确认问题或约定 audit 标准不符合"]
     O --> NA["NA：符合该项不适用边界，写原因"]
-    O --> HC["Human Check：具体证据缺口<br/>写已检查、缺少或失败、下一步动作"]
+    O --> HC["Human Check：具体证据缺口<br/>Findings：结论、缺口、动作<br/>Coverage：已查与未查范围"]
     Y --> P["写入并验证 findings<br/>缺请求项补为 Human Check，不遗漏检查"]
     X --> P
     NA --> P

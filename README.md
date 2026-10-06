@@ -105,7 +105,7 @@ flowchart TD
     O --> Y["Yes：检查范围符合规则"]
     O --> X["No：确认问题或约定 audit 标准不符合"]
     O --> NA["NA：符合该项不适用边界，写原因"]
-    O --> HC["Human Check：具体证据缺口<br/>写已检查、缺少或失败、下一步动作"]
+    O --> HC["Human Check：具体证据缺口<br/>Findings：结论、缺口、动作<br/>Coverage：已查与未查范围"]
     Y --> P["写入并验证 findings<br/>缺请求项补为 Human Check，不遗漏检查"]
     X --> P
     NA --> P
@@ -143,23 +143,19 @@ robots.txt 中的 add-to-cart、woocommerce 上传目录或日志路径，只作
 | Checklist | Check · Result · Findings · Coverage |
 | 10. Robot.txt | Issue · Issue Description · How to Fix · Address |
 
-Result 使用 **Yes / No / NA / Human Check**。证据不足也照样输出最终 Excel，不等补查完成、不留空、不把缺证据填成 NA 或已确认 No。每个 Human Check 在 Findings 写“已检查什么＋支持的结果／数量”“缺少／失败什么”“下一步动作”，Human Check 只保留在 Checklist，不写入 `10. Robot.txt`。No 只代表确认问题，必须有关联 defect issue；若同时有缺口，保留 No 并在 Findings 追加 Human Check，不另列核查 Issue。NA 必须有原因。全部请求项目都包含在最终文件，不能只交 progress.json 或以省略项目掩盖未完成范围。evidence_gaps.json／handover 继续保留用于后续更新，报告交付不等于整体 audit 通过。两张表及既有列保持不变；Human Check 黄色标记。完整输入定义见 [report-schema.md](references/report-schema.md)。缺行或缺核查原因／动作时，通过 `--site-url` 明确启用交付补齐，补为 Human Check；`--prepared-input` 保存实际交付输入。无关字段或未确认历史 config 不阻止有独立证据的判断。
+Result 使用 **Yes / No / NA / Human Check**。证据不足也照样输出最终 Excel，不等补查完成、不留空、不把缺证据填成 NA 或已确认 No。每个 Human Check 在 Findings 简短写“结论／具体缺口＋必要的下一步”，通常一至三行；已检查内容、数量、来源、抽样及未覆盖范围统一写 Coverage，Findings 不重复这些内容，Human Check 只保留在 Checklist，不写入 `10. Robot.txt`。No 只代表确认问题，必须有关联 defect issue；若同时有缺口，保留 No 并在 Findings 追加 Human Check，不另列核查 Issue。NA 必须有原因。全部请求项目都包含在最终文件，不能只交 progress.json 或以省略项目掩盖未完成范围。evidence_gaps.json／handover 继续保留用于后续更新，报告交付不等于整体 audit 通过。两张表及既有列保持不变；Human Check 黄色标记。完整输入定义见 [report-schema.md](references/report-schema.md)。缺行或缺核查原因／动作时，通过 `--site-url` 明确启用交付补齐，补为 Human Check；`--prepared-input` 保存实际交付输入。无关字段或未确认历史 config 不阻止有独立证据的判断。
 
-Findings 使用 Excel 单元格内的**局部加粗**，提高扫描可读性：已检查、结论、缺口／错误、下一步动作等标签自动加粗；Agent 通过内部 `findings_bold` 指定关键结论、数量、阻挡原因或排除依据。没有标签的短开头结论也会加粗。正文、完整 URL、换行和原有列保留，不把整段文字统一加粗，也不在 Excel 显示 Markdown 星号。详见 [Findings 加粗输入](references/report-schema.md#findings-emphasis)。
+Findings 使用 Excel 单元格内的**局部加粗**，提高扫描可读性：已检查、结论、缺口／错误、下一步动作等标签自动加粗；Agent 通过内部 `findings_bold` 指定关键结论、阻挡原因或排除依据。没有标签的短开头结论也会加粗。正文、完整 URL、换行和原有列保留，不把整段文字统一加粗，也不在 Excel 显示 Markdown 星号。详见 [Findings 加粗输入](references/report-schema.md#findings-emphasis)。
 
 文件名：`{site name}_robots_audit_{YYYY-MM-DD}.xlsx`，日期按用户时区；已有文件不覆盖。
 
 Human Check 示例仅说明写法，不是实际网站结果：
 
-> **已检查：**读取 robots.txt，整理 80 条 sitemap URL，确认其中 75 条未被挡。
->
-> **缺少／失败：**另外 5 条权限结果因 SF 导出错误未取得。
->
-> **下一步：**补充这 5 条结果，或验证对应 Googlebot 规则。
->
-> **Coverage：**75／80 已验证，5 条未确认。
+| Findings | Coverage |
+| --- | --- |
+| **Human Check：**SF 导出缺少权限结果。**下一步：**补导出或验证对应 Googlebot 规则。 | 来源：robots.txt、sitemap、SF 导出；75／80 条权限已验证允许，5 条未确认。 |
 
-Human Check 不进入 `10. Robot.txt`。No 同时有缺口时，问题页保留确认问题，未验证范围只写在 Checklist。没有确认问题时，问题页只保留四列表头。旧输入中的 human_check issue 会迁移到对应 Checklist Findings，保留描述、动作和地址。
+Human Check 不进入 `10. Robot.txt`。No 同时有缺口时，问题页保留确认问题，未验证范围只写在 Checklist。没有确认问题时，问题页只保留四列表头。旧输入中的 human_check issue 描述及动作迁移到 Checklist Findings，地址放 Coverage；原始输入保留用于追溯。
 
 
 ## 使用

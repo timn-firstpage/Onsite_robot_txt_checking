@@ -144,7 +144,7 @@ def complete_for_export(data, site_url):
             row.setdefault('human_check_reason', reason)
             if not row['human_check_reason']:
                 row['human_check_reason'] = reason
-        action = '\n'.join(gap['next_action'] for gap in check_gaps) or REVIEW_ACTIONS[cid]
+        action = '\n'.join(gap['next_action'] for gap in check_gaps) or row.get('human_check_action') or REVIEW_ACTIONS[cid]
         row['human_check_action'] = action
     completed_rows, defects = normalize(result)
     result['checklist'] = completed_rows
@@ -204,12 +204,14 @@ def normalize(data):
             addresses = row.get('addresses', [])
             if not isinstance(addresses, list) or any(not isinstance(url, str) for url in addresses):
                 raise ValueError('Legacy review addresses must be a list of strings')
-            if addresses:
-                marker += '\nReview addresses: ' + '\n'.join(addresses)
             for cid in refs:
                 if marker not in ids[cid]['findings']:
                     ids[cid]['findings'] += '\n' + marker
-                required_text(ids[cid], ['findings'])
+                if addresses:
+                    coverage_note = 'Review addresses: ' + '\n'.join(dict.fromkeys(addresses))
+                    if coverage_note not in ids[cid]['coverage']:
+                        ids[cid]['coverage'] += '\n' + coverage_note
+                required_text(ids[cid], ['findings', 'coverage'])
             continue
         linked.update(refs)
         required_text(row, ["issue"])
@@ -232,17 +234,19 @@ def normalize(data):
         cid = gap["check"]
         if cid not in ids or ids[cid]["result"] not in {"No", "Human Check"}:
             raise ValueError("Every evidence gap must reference a No or Human Check Checklist row")
-        marker = "Human Check: " + gap["missing"] + "\n" + gap["next_action"]
-        if marker not in ids[cid]["findings"]:
-            ids[cid]["findings"] += "\n" + marker
+        if gap["missing"] not in ids[cid]["findings"]:
+            ids[cid]["findings"] += "\nHuman Check: " + gap["missing"]
+        if gap["next_action"] not in ids[cid]["findings"]:
+            ids[cid]["findings"] += "\nNext action: " + gap["next_action"]
         required_text(ids[cid], ["findings"])
     for cid, row in ids.items():
         if row['result'] == 'Human Check' or row.get('human_check_action'):
-            action = row.get('human_check_action', REVIEW_ACTIONS[cid])
+            gap_actions = '\n'.join(gap['next_action'] for gap in gaps if gap['check'] == cid)
+            action = row.get('human_check_action') or gap_actions or REVIEW_ACTIONS[cid]
             required_text({'action': action}, ['action'])
-            marker = 'Next action: ' + action
-            if marker not in row['findings']:
-                row['findings'] += '\n' + marker
+            for action_line in dict.fromkeys(action.splitlines()):
+                if action_line and action_line not in row['findings']:
+                    row['findings'] += '\nNext action: ' + action_line
             required_text(row, ['findings'])
     return sorted(ids.values(), key=lambda r: tuple(map(int, r["id"].split(".")))), list(unique.values())
 
