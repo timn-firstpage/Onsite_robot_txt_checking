@@ -34,6 +34,9 @@ Run archive:
   findings.json
   {site name}_robots_audit_{YYYY-MM-DD}.xlsx
   handover.md
+  sf-handover.json     optional shared preparation record or its path in manifest
 ```
 
 Record missing fields, unknown version/rendering and truncation explicitly. Crawl evidence keeps its original time; it is not a new live check. Usage is shared with integrated flows, never reset to gain more budget. The collector updates live_requests for its initial/redirect requests; the agent records SF calls, candidate crawl coverage and other requests. Do not commit client data or machine-local settings.
+
+sf-handover.json belongs to shared preparation and records selected profile, user confirmations, file paths and limitations. It is not findings.json, is not consumed by build_report.py, and does not establish audit completeness. Verify actual exports and per-check evidence before creating final decisions. Config-load errors belong in preparation diagnostics; concrete missing audit evidence belongs in evidence_gaps.json. Keep website 429 separate from MCP/tool 429, preserving source, status, Retry-After and affected coverage.

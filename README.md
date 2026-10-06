@@ -10,7 +10,7 @@
 - robots 模板已移除 HTTP/mixed-content/hostname 检查开关和 preferred_origin；整合配置仍可携带这些字段，但由 HTTPS flow 使用。
 - 原始证据与 usage.json 可共用；请求/MCP 预算累计，不能每个 flow 重新归零。访问同一 SF 实例须串行。
 - `source.allow_new_crawl` 默认 false。发现候选 URL 不自动授权新 crawl；可先生成 URL 清单，复用已有证据或等待 SF 导出。
-- robots 临时清单上限 1,000 页、深度 5、候选上限 100、请求每秒 1 次；这些是上限，仍受共用请求预算约束，不保证全部覆盖。
+- robots 补充发现的临时清单上限 1,000 页、深度 5、候选上限 100，不保证全部覆盖；collector／agent 直接请求每秒 1 次并受共用直接请求预算约束。SF 请求使用其实际 profile 的速度／范围设置，不能把 200 个直接请求预算或这里的速率写成主 crawl 上限。
 - 不写死用户名、盘符、SF 端口或运行机路径。沿用已有 MCP/runtime 配置，无需建立第二个 server。
 - collector 固定复用同一 run/origin 的证据；新采集需要新 run。模板不提供未实现的 force_refresh、TTL、自动重试或连续错误停止开关。
 - 空 robots.txt 必须报问题是固定 audit 规则，不再提供 empty_file_is_issue 开关。
@@ -58,19 +58,28 @@ Result 严格使用 Yes / No / NA。未确认或未执行的检查写入 evidenc
 
 ## 使用
 
-### 首次使用：Screaming Frog 配置
+### SF 共享配置前提
 
-首次导入 skill 后的第一次 audit，Agent 先检查已有证据和工具能力。[配置清单与 Computer Use 流程](references/sf-first-run-setup.md) 只用于确实需要配置或补查的部分，不要求先核对全部设置才执行 audit。MCP 不能配置的选项，可由执行环境实际提供的 native Computer Use 操作；Mac 必须具备 Mac 应用控制能力，不能使用 Windows API 或仅浏览器工具冒充。
+配置加载统一由独立 [sf-shared-config](https://github.com/timn-firstpage/On-_site_SF_shared_config) 负责，需单独安装；此 robots 仓库不复制配置文件，也不自动安装共享 skill。详细路由及每项证据见 [共享前提与 caller 验证](references/sf-first-run-setup.md)。
 
-Native Computer Use 是可选路径，不是整个 audit 的前置条件。先发现真实工具能力；明确 disabled/unsupported 时立即停止 UI 尝试，其他错误只有在状态实际改变后最多重试一次。优先使用可用 MCP、已有 profile 或完整导出；相关证据已足够的检查直接执行。没有任何自动路径时，保存已完成检查、候选与具体证据缺口，返回一次明确的手工补充动作，不一直 pending、不反复初始化。skill 本身不能赋予 Mac 原生控制能力或系统权限。
+| 当前情况 | 执行方式 |
+| --- | --- |
+| 已有适用 crawl／导出 | 核对站点、时间、范围、完成状态和必要字段后直接复用；不用 load config，不要求全部历史设置可见 |
+| 部分证据可用 | 保留支持的判断，只补缺少的 export／特定 URL／内容证据，不强制重爬全站 |
+| 正在爬取 | 不覆盖配置、不打断，保存下一步 checkpoint；你完成并交文件后继续 |
+| 没有适用证据、允许补爬 | shared skill 默认选择 main；必要定向补查用 targeted profile。你确认网站和 sitemap，手动 Start、监督并保存到实际 Downloads |
+| native／独立 config load 失败 | 立即提供手动 UI Load + sitemap 指引，保留原错误；不 retry native、不循环 pending、不用 sf_crawl(config_path) 偷启动 |
+| shared skill 未安装 | 提供安装链接或对应手动流程；不假称已调用，也不阻止复用适用文件 |
 
-不要求补齐所有 Googlebot／robots／rendering config。有效的响应、header、meta robots、canonical 和独立解释的 live robots 规则，可以支持对应判断；只有某项结论依赖 SF 抓取行为且没有等效证据时，才核实相关设置。静态证据不强制要求 JS rendering。缺口必须写成“哪个 URL／字段／结论缺什么”，不能只写“无法验证 SF settings”。
+`source.allow_new_crawl` 只允许请求新的 discovery／List 补爬，不能授权 agent 自动启动；false 时保留候选和证据缺口。已确认配置加载且未改变就跳过 load，HTTPS 和 robots 共用同一会话准备记录。你加入网站 sitemap 后不重新加载通用 profile。List 补查用候选清单，不要求重复全站 sitemap 流程。
 
-主要设置：Googlebot User-Agent、主 profile Obey robots.txt、CSS/JS Store/Crawl 和指令/header 证据。共用 metadata crawl 不默认开启全站 Store HTML；只有少量内容补查 profile 开启 Store HTML，需要动态证据时才启用 JavaScript Rendering 和 Store Rendered HTML。audit profile 关闭 Respect Noindex 和 Respect Canonical，避免相关 URL 被 SF 从结果中隐藏。MCP 场景另需 Database storage、实际 server URL 和 allowed base；已有连接直接复用。
+Main 默认 JS、关闭全站 HTML 存储；targeted profile 保存必要补查的 source/rendered HTML。已有静态证据无需因此重爬。robots 的小范围发现上限不修改 shared main，配置文件不保证 connector 能导出所需内容。
 
-配置前记录/备份现有 profile，保存独立 .seospiderconfig，不覆盖默认设置或中断其他 crawl。实际菜单随版本/macOS 变化，以 UI 为准。设置结果保存到 run 的 sf-setup.json；source.crawl_config_path / content_crawl_config_path / crawl_settings_file 记录主 profile、补查 profile 与验证记录位置。这些由 Agent 操作和验证，不是 Python collector 自动设置。
+保存后仍需验证文件与数据：`.seospider` 要由 SF 成功 load 并检查字段／导出；CSV 要有可读结构、完整行和必要字段。sf-handover.json 只记录准备与用户确认，不是 audit 通过证明。记录网站 429 与 MCP 429 的来源、Retry-After、受影响范围；错误或缺行不能当零结果。
 
-配置权限不等于启动新 crawl：source.allow_new_crawl 仍适用。旧 crawl 的配置不会因今天修改而补齐；需要小范围重抓时记录新的 ID/时间/profile。没有 native Computer Use 时提供人工设置步骤，并准确说明未验证项。
+不要求补齐所有 Googlebot／robots／rendering config。有效响应、header、meta robots、canonical 和可独立解释的 live robots 规则支持对应判断；只有结论依赖 SF 抓取行为且缺等效证据才核实相关设置。10.1／10.6／10.7 可以从直接 robots 证据继续，配置失败不代表这些项失败。其他缺口必须写明具体 URL／字段／结论和补充动作，不能只写“native app control failed”。缺少有效 sitemap 要说明发现范围，但不阻止其他有证据的检查。
+
+你手动运行并监督；持续 429、连接错误或 URL 循环时由你决定暂停／调整／继续／重跑。正常 404 或重定向保留作 audit 证据，不自动重启。完成后确认必要 Crawl Analysis 已结束，保存／导出到你实际的 Downloads 并提供路径和完成状态；自动数据库保存不等于文件已放到 Downloads。等待文件时返回可恢复 checkpoint，最终 Excel 仍遵守严格 Yes／No／NA 规则。
 
 将仓库作为 skill 导入，入口是根目录 [SKILL.md](SKILL.md)。默认可自动发现，也可显式调用 `$onsite-audit-robots`。导入 skill 不等于安装 Python 或连接 MCP。安装位置由你的客户端确定；仓库不自动改全局客户端设置。
 
@@ -102,4 +111,4 @@ collect_robots.py 仅获取 robots 文件及生成候选，不自动验证候选
 
 先复用主 crawl 的 URL/状态/指令/canonical/资源关系，仅对无法判断的候选补充 HTML。robots 的 1,000 页、深度 5、分页 10 页/分类变体 5 个等限制，只用于 robots 补充发现，不写入其他任务的主 crawl/default profile。主 crawl 的范围及预算由整合 agent 决定，不能拿 robots 模板的 200 个补查请求数字作为全站 crawl URL 上限。共享 usage 仍累计，不暗中增加总体预算。
 
-补查使用独立 List Mode profile/crawl ID，默认每批 25 个必要 URL，按需要继续下一批而不是 25 个后停止。静态补查只存 source HTML；必要动态批次才存 rendered HTML。已有内容证据直接复用；预算不足记录缺口，其他不依赖此内容的任务继续进行。完成补查恢复原 SF profile，不污染下一任务。JSON 设置由 Agent 落实，不会自动改变本机 SF。
+补查通过 shared skill 准备独立 List Mode profile/crawl ID，由你手动运行。默认每批 25 个必要 URL，按需要继续下一批而不是 25 个后停止；共享 targeted profile 存 source/rendered HTML，已有内容证据直接复用。预算不足记录缺口，其他不依赖此内容的任务继续。切换回主配置时沿用共享准备记录并保留实际 sitemap，不自动恢复通用 profile 覆盖你的网站设置。JSON 设置不会自动改变本机 SF。
