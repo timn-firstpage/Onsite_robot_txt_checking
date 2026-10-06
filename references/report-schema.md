@@ -13,7 +13,7 @@ The second sheet contains only confirmed defects linked to No. Human Check detai
 {
   "requested_checks": ["10.1", "10.5"],
   "checklist": [
-    {"id":"10.1","check":"10.1 Does a robots.txt document exist?","result":"No","findings":"robots.txt 返回 200，但内容为空。","coverage":"检查主站 /robots.txt；保存原始内容。"},
+    {"id":"10.1","check":"10.1 Does a robots.txt document exist?","result":"No","findings":"robots.txt 返回 200，但内容为空。","findings_bold":["内容为空"],"coverage":"检查主站 /robots.txt；保存原始内容。"},
     {"id":"10.5","check":"10.5 Are special pages handled appropriately?","result":"Human Check","findings":"已检查：读取 robots 和已有 crawl，整理特殊页候选；尚未验证候选用途。","human_check_reason":"缺少候选响应、内容及适用控制证据。","human_check_action":"人工核对候选的响应、用途及适用控制，保存只读证据；不执行订单或私人账户登录。","coverage":"候选已准备，页面未验证；未执行交易或登录。"}
   ],
   "issues": [
@@ -61,3 +61,7 @@ Preserve original crawl time, incomplete exports, missing material fields and ac
 10.2 NA reasons are confirmed absent robots or explicit user waiver; missing page subtypes do not establish NA. For 10.3 record site nature, evidence and selected/excluded families with reasons; do not require cart/checkout on non-shopping sites. No-Disallow is an audit-standard configuration issue with site-appropriate further validation, not proof of private exposure.
 
 Confirmed unused/inapplicable template directives belong in issues as kind=defect linked to 10.3 No and are exported to 10. Robot.txt. Description records the exact groups/directives and the site evidence confirming they are unnecessary; How to Fix removes only those confirmed remnants and rechecks important URLs/resources. This is a configuration finding, not proof of private exposure or ranking harm. Unverified template purpose remains Human Check only in Checklist.
+
+## Findings emphasis
+
+Checklist Findings supports real Excel rich-text bold inside each cell. It automatically emphasizes labels such as 已检查、结论、缺少／失败、下一步动作、排除原因、Human Check, Already checked and Next action. For unstructured text it emphasizes a short leading sentence when available. An optional `findings_bold` array selects exact existing text phrases for key conclusions, verified/unresolved counts, blocked causes or exclusions. Example: `["75/80 URL 已验证", "仅供登录页使用，已排除"]`, provided those phrases actually occur in findings. No new Excel column is added. Unmatched phrases have no effect; malformed arrays require input correction. Do not insert Markdown `**` markers or bold the entire cell. Text, URLs, line breaks, result values and confirmed-defect-only sheet behavior remain preserved. Reloading without rich-text support still returns the original plain Findings text.

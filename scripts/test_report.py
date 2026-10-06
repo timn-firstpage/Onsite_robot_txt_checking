@@ -16,6 +16,40 @@ def fixture():
 
 
 class ReportTests(unittest.TestCase):
+    def test_findings_rich_bold_preserves_text_urls_and_plain_sheet_values(self):
+        from openpyxl.cell.rich_text import TextBlock
+        data=fixture()
+        row=data['checklist'][1]
+        row['findings']='已检查：75/80 URLs allowed.\n结论：五条结果未确认。\n地址：https://example.com/a?x=1&y=2'
+        row['findings_bold']=['75/80 URLs allowed','五条结果未确认']
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            output=Path(directory)/'audit.xlsx';build(data,output)
+            wb=load_workbook(output,rich_text=True)
+            value=wb['Checklist']['C3'].value
+            self.assertEqual(str(value),row['findings'])
+            bold=''.join(run.text for run in value if isinstance(run,TextBlock) and run.font.b)
+            self.assertIn('已检查：',bold)
+            self.assertIn('结论：',bold)
+            self.assertIn('75/80 URLs allowed',bold)
+            self.assertIn('五条结果未确认',bold)
+            self.assertNotIn('https://example.com/a?x=1&y=2',bold)
+            self.assertEqual(wb['10. Robot.txt']['B2'].data_type,'s')
+            wb.close()
+            wb=load_workbook(output)
+            self.assertEqual(wb['Checklist']['C3'].value,row['findings']);wb.close()
+
+    def test_unstructured_findings_bold_lead_and_formula_safety(self):
+        from openpyxl.cell.rich_text import TextBlock
+        data=fixture();data['checklist'][1]['findings']='=untrusted finding. Remaining evidence retained.'
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            output=Path(directory)/'audit.xlsx';build(data,output)
+            wb=load_workbook(output,rich_text=True)
+            value=wb['Checklist']['C3'].value
+            self.assertEqual(str(value),data['checklist'][1]['findings'])
+            self.assertEqual(wb['Checklist']['C3'].data_type,'s')
+            self.assertTrue(any(isinstance(run,TextBlock) and run.font.b for run in value))
+            wb.close()
+
     def test_human_only_input_needs_no_issue_and_defect_sheet_stays_empty(self):
         data={'requested_checks':['10.4'],'checklist':[{
             'id':'10.4','check':'10.4 CSS/JS','result':'Human Check',

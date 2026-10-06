@@ -53,6 +53,43 @@ def required_text(row, fields):
             raise ValueError(f"{field} exceeds Excel cell limit; split issue groups")
 
 
+def rich_findings(text, phrases=()):
+    """Apply Excel rich-text emphasis without changing the Findings text."""
+    from openpyxl.cell.rich_text import CellRichText, TextBlock
+    from openpyxl.cell.text import InlineFont
+
+    labels = r'(?:Human Check|Already checked(?: / available evidence)?|Missing(?:/failed)?|Next action|Conclusion|Excluded(?: resources)?|Coverage|已检查|已验证|检查结果|结论|缺少(?:／失败)?|缺口(?:／错误)?|失败|下一步(?:动作)?|排除原因|已排除|覆盖范围|匹配规则)'
+    intervals = [(match.start(1), match.end(1)) for match in re.finditer(r'^\s*(' + labels + r'\s*[:：])', text, re.M | re.I)]
+    for phrase in phrases:
+        intervals.extend((match.start(), match.end()) for match in re.finditer(re.escape(phrase), text))
+    if not intervals:
+        # Unstructured findings still get a short leading conclusion emphasized.
+        match = re.search(r'\S[^\n]*', text)
+        if match and not match.group().startswith(('http://', 'https://')):
+            leading = match.group()
+            sentence_end = re.search(r'[。！？]|[.!?](?=\s|$)', leading)
+            end = sentence_end.end() if sentence_end else len(leading)
+            if end <= 160:
+                intervals.append((match.start(), match.start() + end))
+    merged = []
+    for start, end in sorted(intervals):
+        if merged and start <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(end, merged[-1][1]))
+        else:
+            merged.append((start, end))
+    if not merged:
+        return text
+    runs, cursor = [], 0
+    for start, end in merged:
+        if start > cursor:
+            runs.append(text[cursor:start])
+        runs.append(TextBlock(InlineFont(rFont='Calibri', sz=11, b=True), text[start:end]))
+        cursor = end
+    if cursor < len(text):
+        runs.append(text[cursor:])
+    return CellRichText(runs)
+
+
 def complete_for_export(data, site_url):
     """Explicit delivery fallback, using the actual audited origin; never invent a pass.
 
@@ -131,6 +168,9 @@ def normalize(data):
     for source in checks:
         row = dict(source)
         required_text(row, ["id", "check", "findings", "coverage"])
+        phrases = row.get('findings_bold', [])
+        if not isinstance(phrases, list) or any(not isinstance(phrase, str) or not phrase.strip() for phrase in phrases):
+            raise ValueError('findings_bold must be a list of non-empty exact text phrases')
         if row["id"] not in CHECK_IDS or row["id"] in ids:
             raise ValueError("Unknown/duplicate check ID")
         if row.get("result") not in {"Yes", "No", "NA", "Human Check"}:
@@ -235,7 +275,7 @@ def build(data, output, site_url=None):
             cell.fill = PatternFill("solid", fgColor="2F75B5")
         for j, width in enumerate(widths[title], 1):
             sheet.column_dimensions[sheet.cell(1, j).column_letter].width = width
-        for excel_row in sheet.iter_rows(min_row=2):
+        for row_index, excel_row in enumerate(sheet.iter_rows(min_row=2)):
             line_count = 1
             for j, cell in enumerate(excel_row):
                 cell.font = Font(name="Calibri", size=11)
@@ -249,6 +289,9 @@ def build(data, output, site_url=None):
                         cell.font = Font(name="Calibri", size=11, color="0563C1", underline="single")
             sheet.row_dimensions[excel_row[0].row].height = min(409, max(30, line_count * 16 + 8))
             if title == "Checklist":
+                source = checklist[row_index]
+                excel_row[2].value = rich_findings(source['findings'], source.get('findings_bold', []))
+                excel_row[2].data_type = 's'
                 color = {"No": "FCE4D6", "NA": "E7E6E6", "Human Check": "FFF2CC"}.get(excel_row[1].value)
                 if color:
                     excel_row[1].fill = PatternFill("solid", fgColor=color)
