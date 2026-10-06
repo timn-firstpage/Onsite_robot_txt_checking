@@ -34,7 +34,7 @@ Keep the shared sf-handover.json path in the local manifest/handover; it records
 | --- | --- |
 | 10.1 / 10.6 / 10.7 | Direct robots response, content, lowercase endpoint and declarations; these can proceed without SF setup |
 | 10.2 | Sitemap/fallback URL inventory and effective Googlebot permissions; successful HTTP fetch and extra purpose confirmation are not pass prerequisites |
-| 10.3 | Effective Googlebot rules for selected finite enumeration samples; all blocked supports scoped Yes without existence proof. No non-empty effective Disallow in readable robots gives audit-standard No with further validation |
+| 10.3 | Agent selects applicable families from site evidence before follow-up; effective Googlebot rules for those finite enumeration samples; all blocked supports scoped Yes without existence proof. No non-empty effective Disallow in readable robots gives audit-standard No with further validation |
 | 10.4 | Required CSS/JS source-page/resource relationships, responses and bot permissions, with dynamic exclusions |
 | 10.5 | Actual purpose/access-control evidence plus relevant meta/header noindex, canonical or redirects |
 

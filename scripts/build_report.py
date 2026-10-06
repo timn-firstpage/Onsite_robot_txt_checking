@@ -21,7 +21,7 @@ CHECK_NAMES = {
 REVIEW_ACTIONS = {
     '10.1': 'Verify the lowercase robots response and its actual text; record status and redirects.',
     '10.2': 'Complete the sitemap/fallback URL inventory and verify effective Googlebot permissions for unresolved URLs; retain already-checked results.',
-    '10.3': 'Verify effective Googlebot rules for the selected finite samples and whether non-empty Disallow applies; further validate unblocked actual targets before adding restrictions.',
+    '10.3': 'Use actual site evidence to select applicable sample families and record exclusions; verify effective Googlebot rules and non-empty Disallow, then further validate relevant targets before adding restrictions. Do not require cart/checkout on non-shopping sites.',
     '10.4': 'Identify SF crawl/export errors or missing CSS/JS rows, relationships or permission results; obtain only the missing evidence and retain tested resources.',
     '10.5': 'Verify candidate purpose and the applicable control without logging in or submitting orders.',
     '10.6': 'Verify the lowercase endpoint; do not infer casing from an unknown server filename.',
