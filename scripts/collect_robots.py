@@ -138,10 +138,13 @@ def collect(config, run_dir, origin=None, known_urls=()):
                 with response:
                     status = response.code
                     location = response.headers.get("Location")
+                    retry_after = response.headers.get("Retry-After")
+                    content_type = response.headers.get("Content-Type")
                     body = response.read(MAX_BYTES + 1)
                     truncated = len(body) > MAX_BYTES
                     text = body[:MAX_BYTES].decode("utf-8-sig", errors="replace")
-                hops.append({"url": url, "status": status, "location": location})
+                hops.append({"url": url, "status": status, "location": location,
+                             "retry_after": retry_after, "content_type": content_type})
                 if status in {301, 302, 303, 307, 308} and location:
                     target = urljoin(url, location)
                     origin_of(target)
@@ -169,7 +172,7 @@ def collect(config, run_dir, origin=None, known_urls=()):
                "error": error, "truncated": truncated, "raw_file": str(raw_path.resolve()),
                "sha256": hashlib.sha256(raw_path.read_bytes()).hexdigest(), "analysis": analysis,
                "candidate_file": str(candidate_path.resolve()), "candidates": rows, "excluded_candidates": excluded,
-               "note": "Candidates unverified; Googlebot permissions and noindex require SF evidence."}
+               "note": "Candidates unverified. This helper does not judge effective Googlebot permissions or noindex. Use sufficient independent rule evidence or relevant SF evidence; missing SF configuration alone is not a blocker."}
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return summary
 

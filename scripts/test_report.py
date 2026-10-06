@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from openpyxl import load_workbook
-from build_report import build, normalize, report_filename
+from build_report import build, complete_for_export, normalize, report_filename
 
 
 def fixture():
@@ -16,6 +16,56 @@ def fixture():
 
 
 class ReportTests(unittest.TestCase):
+    def test_delivery_completion_exports_missing_rows_without_inventing_passes(self):
+        data=fixture(); del data['requested_checks']; data['checklist'].pop(1)
+        original=copy.deepcopy(data)
+        prepared=complete_for_export(data, 'https://audit-client.test/path')
+        self.assertEqual(data,original)
+        self.assertEqual(len(prepared['checklist']),7)
+        results={row['id']:row['result'] for row in prepared['checklist']}
+        self.assertEqual(results['10.1'],'No'); self.assertEqual(results['10.5'],'NA')
+        self.assertEqual(results['10.4'],'Human Check')
+        self.assertTrue(all(issue['addresses'][0].startswith('https://audit-client.test/') for issue in prepared['issues'] if issue.get('kind')=='human_check'))
+        self.assertEqual(complete_for_export(prepared,'https://audit-client.test/'),prepared)
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            output=Path(directory)/'audit.xlsx'
+            self.assertEqual(build(data,output,site_url='https://audit-client.test/')['checks'],7)
+            wb=load_workbook(output); self.assertEqual(wb['Checklist'].max_row,8); wb.close()
+
+    def test_completion_preserves_no_and_downgrades_provisional_pass_with_gap(self):
+        data=fixture()
+        data['evidence_gaps']=[{'check':'10.1','missing':'Secondary origin unverified.','next_action':'Verify secondary origin.'},
+                               {'check':'10.4','missing':'Resource relationships missing.','next_action':'Obtain resource inlinks.'},
+                               {'check':'10.5','missing':'Untested live transaction flow.','next_action':'Obtain read-only flow evidence.'}]
+        prepared=complete_for_export(data,'https://example.com/')
+        rows,_=normalize(prepared)
+        self.assertEqual(rows[0]['result'],'No')
+        self.assertIn('Human Check',rows[0]['findings'])
+        self.assertEqual(rows[1]['result'],'Human Check')
+        self.assertIn('Earlier provisional result: Yes',rows[1]['findings'])
+        self.assertEqual(rows[2]['result'],'Human Check')
+        self.assertIn('Earlier provisional result: NA',rows[2]['findings'])
+
+    def test_empty_progress_can_export_and_invalid_evidence_still_rejected(self):
+        prepared=complete_for_export({},'https://example.com/')
+        rows,issues=normalize(prepared)
+        self.assertEqual([row['result'] for row in rows],['Human Check']*7)
+        self.assertEqual(len(issues),7)
+        for url in ['not a URL','https://user:secret@example.com/']:
+            with self.assertRaises(ValueError): complete_for_export({},url)
+        data=fixture(); data['issues']=[]
+        with self.assertRaises(ValueError): complete_for_export(data,'https://example.com/')
+        data=fixture(); data['checklist'][0]['id']='10.9'
+        with self.assertRaises(ValueError): complete_for_export(data,'https://example.com/')
+
+    def test_identical_issue_retains_all_check_associations(self):
+        data=fixture(); data['checklist'][1]['result']='No'
+        duplicate=copy.deepcopy(data['issues'][0]); duplicate['check_ids']=['10.4']
+        data['issues'].append(duplicate)
+        _,issues=normalize(data)
+        self.assertEqual(len(issues),1)
+        self.assertEqual(issues[0]['check_ids'],['10.1','10.4'])
+
     def test_filename(self):
         self.assertEqual(report_filename('Example','2026-10-05'),'Example_robots_audit_2026-10-05.xlsx')
         self.assertEqual(report_filename('品牌/香港','2026-10-05'),'品牌_香港_robots_audit_2026-10-05.xlsx')

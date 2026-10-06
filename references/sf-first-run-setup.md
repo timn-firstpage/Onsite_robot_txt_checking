@@ -8,7 +8,7 @@ This filename remains the entry for older documentation links. Profile loading a
 | --- | --- |
 | Suitable existing crawl/exports | Verify site, time, scope, completion and check-specific fields; reuse directly. No profile load or exhaustive historical-settings gate. |
 | Partly usable evidence | Keep supported checks and request only missing exports/targeted evidence; missing exports do not necessarily require recrawling. |
-| Active user crawl | Do not load over it or interrupt it. Save a checkpoint with needed files/next action and resume after user handover, without indefinite polling. |
+| Active user crawl | Do not load over it or interrupt it. Deliver the current final Excel with Human Check and a checkpoint now; update after user handover, without indefinite polling. |
 | No suitable evidence; follow-up permitted | Invoke the installed shared skill for preparation. Main is selected automatically for a full crawl; targeted profile only for necessary content/response follow-ups. |
 | Shared skill absent | Give its install link or equivalent manual Load, sitemap, Start and save instructions. Do not claim it ran; suitable existing files remain usable. |
 
@@ -41,3 +41,5 @@ Keep the shared sf-handover.json path in the local manifest/handover; it records
 Use independently interpretable live rules and explicit response/directive evidence where sufficient. Verify SF user-agent/robots mode only when a conclusion depends on that crawl's behavior; verify rendering only for dynamic claims. Do not request all settings solely because native control failed. Ignore-robots diagnostics must be separate and cannot establish Google can read a blocked noindex. Obey-mode missing blocked-page content requires a specific diagnostic/export gap, not invented absence.
 
 Robots inventory/series/candidate limits apply to this flow's supplemental discovery only, not the shared main crawl or other audits. content_batch_size is a batch size, not a total cap; preserve all necessary batches and their distinct timestamps/IDs. Configuration transitions use shared preparation and accepted user confirmations, preserving the main crawl and actual sitemap. Record exact missing URL/field/relationship/purpose and next action in evidence_gaps.json. Unknown/errors are Human Check, not NA. The robots caller always exports the final workbook with gaps, reasons and manual actions, even if preparation or supplementary evidence remains incomplete; return useful progress rather than indefinite pending.
+
+Follow-up preparation is not a reason to wait before delivery: first export the current final workbook with Human Check gaps and the candidate/manual-action handover, then update after the user supplies evidence. See [delivery boundaries](delivery-boundaries.md) for NA, minimum evidence and protected-route cases.

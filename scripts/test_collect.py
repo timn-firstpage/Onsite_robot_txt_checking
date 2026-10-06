@@ -4,10 +4,26 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from io import BytesIO
+from urllib.error import HTTPError
 from collect_robots import analyse, candidates, collect, origin_of
 
 
 class CollectorTests(unittest.TestCase):
+    def test_429_retains_response_headers_and_does_not_retry(self):
+        config={'site':{'start_url':'https://example.com/'},'budget':{'max_live_requests':10},'robots':{}}
+        error=HTTPError('https://example.com/robots.txt',429,'Too Many Requests',
+                        {'Retry-After':'120','Content-Type':'text/plain'},BytesIO(b'Rate limited'))
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            with patch('collect_robots.build_opener') as opener:
+                opener.return_value.open.side_effect=error
+                result=collect(config,directory)
+                self.assertEqual(result['analysis']['kind'],'unresolved_response')
+                self.assertEqual(result['hops'][0]['retry_after'],'120')
+                self.assertEqual(result['hops'][0]['content_type'],'text/plain')
+                self.assertEqual(result['status'],429)
+                self.assertEqual(opener.return_value.open.call_count,1)
+
     def test_disabled_flow_has_no_side_effects(self):
         with patch("collect_robots.build_opener") as opener:
             with self.assertRaises(ValueError):

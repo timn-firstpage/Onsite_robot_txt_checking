@@ -1,12 +1,32 @@
 """Render agent-reviewed robots.txt findings. No network or MCP calls."""
 import argparse
+import copy
 import json
 import math
 import re
 from datetime import date
 from pathlib import Path
+from urllib.parse import urlsplit
 
 CHECK_IDS = {f"10.{i}" for i in range(1, 8)}
+CHECK_NAMES = {
+    '10.1': 'Does a robots.txt document exist?',
+    '10.2': 'Are important pages allowed for Googlebot?',
+    '10.3': 'Are appropriate crawl restrictions in place?',
+    '10.4': 'Are required CSS and JS allowed?',
+    '10.5': 'Are special pages handled appropriately?',
+    '10.6': 'Is the lowercase robots.txt endpoint valid?',
+    '10.7': 'Is a sitemap declared in robots.txt?',
+}
+REVIEW_ACTIONS = {
+    '10.1': 'Verify the lowercase robots response and its actual text; record status and redirects.',
+    '10.2': 'Identify intended public pages and verify effective Googlebot rules and final responses.',
+    '10.3': 'Identify actual should-not-crawl URLs and their policy, then verify effective rules.',
+    '10.4': 'Obtain page/resource relationships for necessary CSS/JS and verify rules and responses.',
+    '10.5': 'Verify candidate purpose and the applicable control without logging in or submitting orders.',
+    '10.6': 'Verify the lowercase endpoint; do not infer casing from an unknown server filename.',
+    '10.7': 'Inspect the raw robots text for a valid absolute Sitemap declaration.',
+}
 SHEETS = {
     "Checklist": (["Check", "Result", "Findings", "Coverage"], ["check", "result", "findings", "coverage"]),
     "Issues": (["Issue", "Issue Description", "How to Fix", "Address"], ["issue", "description", "how_to_fix", "address"]),
@@ -31,6 +51,71 @@ def required_text(row, fields):
             raise ValueError(f"Missing/non-string {field}")
         if len(row[field]) > 32767:
             raise ValueError(f"{field} exceeds Excel cell limit; split issue groups")
+
+
+def complete_for_export(data, site_url):
+    """Explicit delivery fallback, using the actual audited origin; never invent a pass.
+
+    Strict normalize remains the final validator. Invalid IDs, unsupported results,
+    and unsubstantiated No/defect associations are not silently repaired.
+    """
+    if not isinstance(data, dict) or not isinstance(site_url, str):
+        raise ValueError('Completion requires a report object and actual site URL string')
+    parsed = urlsplit(site_url)
+    if parsed.scheme not in {'http', 'https'} or not parsed.hostname or parsed.username or parsed.password or any(c.isspace() for c in site_url):
+        raise ValueError('site_url must be the actual absolute HTTP(S) audited URL without credentials')
+    origin = f'{parsed.scheme}://{parsed.netloc}'
+    result = copy.deepcopy(data)
+    if 'overview' in result:
+        raise ValueError('Legacy schema must be migrated before completion')
+    requested = result.get('requested_checks', sorted(CHECK_IDS))
+    if not isinstance(requested, list) or not requested or any(not isinstance(cid, str) or cid not in CHECK_IDS for cid in requested) or len(set(requested)) != len(requested):
+        raise ValueError('requested_checks must contain unique supported check IDs')
+    rows = result.setdefault('checklist', [])
+    issues = result.setdefault('issues', [])
+    gaps = result.setdefault('evidence_gaps', [])
+    if not all(isinstance(value, list) for value in (rows, issues, gaps)):
+        raise ValueError('checklist, issues and evidence_gaps must be lists')
+    ids = {}
+    for row in rows:
+        if not isinstance(row, dict) or row.get('id') not in requested or row['id'] in ids:
+            raise ValueError('Unknown/duplicate/unrequested check ID')
+        ids[row['id']] = row
+    by_check = {}
+    for gap in gaps:
+        if not isinstance(gap, dict):
+            raise ValueError('Each evidence gap must be an object')
+        required_text(gap, ['check', 'missing', 'next_action'])
+        if gap['check'] not in requested:
+            raise ValueError('Evidence gap references an unrequested check')
+        by_check.setdefault(gap['check'], []).append(gap)
+    for cid in requested:
+        if cid not in ids:
+            row = {'id': cid, 'check': cid + ' ' + CHECK_NAMES[cid], 'result': 'Human Check',
+                   'findings': 'No agent-reviewed decision supplied for this requested check.',
+                   'coverage': 'Not verified; no completed scope supplied.'}
+            rows.append(row)
+            ids[cid] = row
+        row = ids[cid]
+        check_gaps = by_check.get(cid, [])
+        if check_gaps and row.get('result') in {'Yes', 'NA'}:
+            row['findings'] = 'Earlier provisional result: ' + row['result'] + '.\n' + row.get('findings', '')
+            row['result'] = 'Human Check'
+        if row.get('result') != 'Human Check' and not (row.get('result') == 'No' and check_gaps):
+            continue
+        reason = '\n'.join(gap['missing'] for gap in check_gaps) or row.get('human_check_reason') or row.get('findings') or 'Required evidence was not supplied.'
+        if row['result'] == 'Human Check':
+            row.setdefault('human_check_reason', reason)
+            if not row['human_check_reason']:
+                row['human_check_reason'] = reason
+        action = '\n'.join(gap['next_action'] for gap in check_gaps) or REVIEW_ACTIONS[cid]
+        linked = any(isinstance(issue, dict) and issue.get('kind') == 'human_check' and cid in issue.get('check_ids', []) for issue in issues)
+        if not linked:
+            issues.append({'check_ids': [cid], 'kind': 'human_check', 'issue': 'Human Check: ' + CHECK_NAMES[cid],
+                           'description': reason + '\nThis is an evidence gap, not a confirmed website defect.',
+                           'how_to_fix': action, 'addresses': [origin + '/robots.txt' if cid in {'10.1', '10.6', '10.7'} else origin + '/']})
+    normalize(result)
+    return result
 
 
 def normalize(data):
@@ -94,8 +179,11 @@ def normalize(data):
             raise ValueError("Issue addresses must be absolute HTTP(S) URLs")
         row["address"] = "\n".join(dict.fromkeys(addresses))
         required_text(row, ["address"])
-        identity = tuple(row[field] for field in ["issue", "description", "how_to_fix", "address"])
-        unique[identity] = row
+        identity = (kind,) + tuple(row[field] for field in ["issue", "description", "how_to_fix", "address"])
+        if identity in unique:
+            unique[identity]['check_ids'] = list(dict.fromkeys(unique[identity]['check_ids'] + refs))
+        else:
+            unique[identity] = row
     if {cid for cid, row in ids.items() if row["result"] == "No"} != linked:
         raise ValueError("Every No requires a confirmed-defect Issues row")
     if not {cid for cid, row in ids.items() if row["result"] == "Human Check"} <= human_linked:
@@ -114,10 +202,12 @@ def normalize(data):
     return sorted(ids.values(), key=lambda r: tuple(map(int, r["id"].split(".")))), list(unique.values())
 
 
-def build(data, output):
+def build(data, output, site_url=None):
     from openpyxl import Workbook, load_workbook
     from openpyxl.styles import Alignment, Font, PatternFill
     from openpyxl.worksheet.datavalidation import DataValidation
+    if site_url is not None:
+        data = complete_for_export(data, site_url)
     checklist, issues = normalize(data)
     output = Path(output)
     if output.exists():
@@ -185,5 +275,19 @@ if __name__ == "__main__":
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--site-name", required=True)
     parser.add_argument("--date", required=True, help="YYYY-MM-DD in the user's timezone")
+    parser.add_argument("--site-url", help="Actual audited URL: explicitly complete missing checks/review issues as Human Check")
+    parser.add_argument("--prepared-input", type=Path, help="Archive completed report input to a new JSON path (requires --site-url)")
     args = parser.parse_args()
-    print(json.dumps(build(json.loads(args.input.read_text(encoding="utf-8-sig")), args.output_dir / report_filename(args.site_name, args.date)), ensure_ascii=False))
+    data = json.loads(args.input.read_text(encoding="utf-8-sig"))
+    if args.prepared_input and not args.site_url:
+        parser.error('--prepared-input requires --site-url')
+    if args.site_url:
+        data = complete_for_export(data, args.site_url)
+    output = args.output_dir / report_filename(args.site_name, args.date)
+    if output.exists():
+        raise FileExistsError(f'Refusing to overwrite {output}; select a new path')
+    if args.prepared_input:
+        args.prepared_input.parent.mkdir(parents=True, exist_ok=True)
+        with args.prepared_input.open('x', encoding='utf-8') as stream:
+            stream.write(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
+    print(json.dumps(build(data, output), ensure_ascii=False))
