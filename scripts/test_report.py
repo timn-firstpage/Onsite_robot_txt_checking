@@ -33,7 +33,7 @@ class ReportTests(unittest.TestCase):
             self.assertEqual([c.value for c in wb['Issues'][1]],['Issue','Issue Description','How to Fix','Address'])
             self.assertIn(data['checklist'][2]['na_reason'],wb['Checklist']['C4'].value)
             self.assertEqual(wb['Checklist']['B3'].value,'Yes')
-            self.assertEqual(wb['Checklist'].data_validations.dataValidation[0].formula1,'"Yes,No,NA"')
+            self.assertEqual(wb['Checklist'].data_validations.dataValidation[0].formula1,'"Yes,No,NA,Human Check"')
             self.assertEqual(wb['Issues']['D2'].value,data['issues'][0]['addresses'][0])
             self.assertEqual(wb['Issues']['B2'].data_type,'s')
             self.assertEqual(len(wb['Checklist'].data_validations.dataValidation),1)
@@ -55,13 +55,68 @@ class ReportTests(unittest.TestCase):
         data=fixture(); data['issues'][0]['check_ids']=['10.7']
         with self.assertRaises(ValueError): normalize(data)
 
-    def test_incomplete_scope_or_evidence_blocks_final_export(self):
+    def test_missing_requested_rows_or_unlabelled_gaps_are_rejected(self):
         data=fixture(); data['checklist'].pop()
         with self.assertRaises(ValueError): normalize(data)
         data=fixture(); data['evidence_gaps']=[{'check':'10.4','missing':'resource relationships'}]
         with self.assertRaises(ValueError): normalize(data)
         data=fixture(); del data['requested_checks']
         with self.assertRaises(ValueError): normalize(data)
+
+    def test_human_check_is_exported_with_gap_issue_and_action(self):
+        data=fixture()
+        row=data['checklist'][1]
+        row.update(result='Human Check', human_check_reason='Resource relationship export is missing.')
+        data['evidence_gaps']=[{'check':'10.4','missing':'Resource relationship export is missing.', 'next_action':'Export source page/resource pairs and verify their responses.'}]
+        data['issues'].append({'check_ids':['10.4'], 'kind':'human_check', 'issue':'Resource coverage unverified',
+                              'description':'Required resources have not all been verified; no confirmed resource defect.',
+                              'how_to_fix':'Export source page/resource pairs and verify their responses.', 'addresses':['https://example.com/']})
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            build(data,Path(directory)/'audit.xlsx')
+            wb=load_workbook(Path(directory)/'audit.xlsx')
+            self.assertEqual(wb['Checklist']['B3'].value,'Human Check')
+            self.assertIn('Human Check',wb['Checklist']['C3'].value)
+            self.assertIn('Export source page/resource pairs',wb['Checklist']['C3'].value)
+            self.assertTrue(wb['Issues']['A3'].value.startswith('Human Check'))
+            self.assertEqual(wb['Checklist']['B3'].fill.fgColor.rgb,'00FFF2CC')
+            wb.close()
+
+    def test_human_check_cannot_replace_confirmed_defect_or_link_to_yes(self):
+        data=fixture()
+        data['issues'][0]['kind']='human_check'
+        with self.assertRaises(ValueError): normalize(data)
+        data=fixture()
+        data['issues'].append({'check_ids':['10.4'], 'kind':'human_check', 'issue':'Unknown', 'description':'Unknown',
+                              'how_to_fix':'Verify', 'addresses':['https://example.com/']})
+        with self.assertRaises(ValueError): normalize(data)
+        data=fixture(); data['checklist'][1]['result']='Human Check'
+        with self.assertRaises(ValueError): normalize(data)
+
+    def test_all_seven_unresolved_checks_still_export_final_workbook(self):
+        ids=[f'10.{i}' for i in range(1,8)]
+        data={'checklist':[{'id':cid,'check':cid,'result':'Human Check','findings':'No usable evidence supplied.',
+                           'human_check_reason':'Required evidence unavailable.','coverage':'Not verified.'} for cid in ids],
+              'issues':[{'check_ids':[cid],'kind':'human_check','issue':'Evidence missing '+cid,
+                         'description':'No confirmed defect; evidence missing.','how_to_fix':'Obtain required evidence and verify '+cid,
+                         'addresses':['https://example.com/']} for cid in ids]}
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            result=build(data,Path(directory)/'audit.xlsx')
+            self.assertEqual(result['checks'],7)
+            wb=load_workbook(Path(directory)/'audit.xlsx')
+            self.assertEqual([wb['Checklist'].cell(i,2).value for i in range(2,9)],['Human Check']*7)
+            self.assertEqual(wb['Issues'].max_row,8)
+            wb.close()
+
+    def test_confirmed_no_with_review_issue_keeps_defect_and_visible_gap(self):
+        data=fixture()
+        data['issues'].append({'check_ids':['10.1'],'kind':'human_check','issue':'Other origin unverified',
+                              'description':'Secondary origin response unavailable.','how_to_fix':'Check secondary origin robots response.',
+                              'addresses':['https://www.example.com/robots.txt']})
+        rows,issues=normalize(data)
+        self.assertEqual(rows[0]['result'],'No')
+        self.assertIn('Human Check',rows[0]['findings'])
+        self.assertIn('Check secondary origin',rows[0]['findings'])
+        self.assertEqual(len(issues),2)
 
     def test_duplicate_check_and_legacy_schema(self):
         data=fixture(); data['checklist'].append(copy.deepcopy(data['checklist'][0]))

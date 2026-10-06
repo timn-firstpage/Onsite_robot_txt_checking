@@ -37,7 +37,7 @@
 
 10.5 采用 **Are special pages handled appropriately?**：购物车／普通感谢页接受有效 Disallow 或可读取 noindex；后台／私人账户内容必须有授权控制；重复内容按 canonical、重定向或 noindex 判断。公开登录／注册页按约定 SEO 策略检查。不统一要求所有类别 Disallow。
 
-未发现候选不能证明页面不存在。NA 必须写明原因、尝试范围和发现限制。超时、403、缺字段等无法确认时 记录缺失证据及下一步，补齐前不交付完整最终报告。SF 的 Non-Indexable 不等于 noindex；忽略 robots 后读到 noindex，不代表 Google 能读取。此 flow 不执行交易、登录私人账户或完整安全扫描。
+未发现候选不能证明页面不存在。NA 必须写明原因、尝试范围和发现限制。超时、403、缺字段等无法确认时 记录缺失证据及下一步，最终 Excel 仍交付，对应项和 Issue 标 Human Check，写明缺口与人工核查动作。SF 的 Non-Indexable 不等于 noindex；忽略 robots 后读到 noindex，不代表 Google 能读取。此 flow 不执行交易、登录私人账户或完整安全扫描。
 
 ### 默认／插件规则的边界
 
@@ -54,7 +54,7 @@ robots.txt 中的 add-to-cart、woocommerce 上传目录或日志路径，只作
 | Checklist | Check · Result · Findings · Coverage |
 | Issues | Issue · Issue Description · How to Fix · Address |
 
-Result 严格使用 Yes / No / NA。未确认或未执行的检查写入 evidence_gaps.json 和 handover，补齐后才生成最终报告，不留空、不增加第四种结果，也不把资料缺失标成 NA。每个 NA 必须提供原因，每个 No 必须关联具体 issue。Issues 只写确认的问题，单元格内换行列点，Address 每个完整 URL 一行。两张表始终保留。完整输入定义见 [report-schema.md](references/report-schema.md)。
+Result 使用 **Yes / No / NA / Human Check**。证据不足也照样输出最终 Excel，不等补查完成、不留空、不把缺证据填成 NA 或已确认 No。每个 Human Check 在 Findings 写原因，并在 Issues 写 `Human Check`、具体缺少的证据和人工动作；它是核查事项，不是已确认网站缺陷。No 只代表确认问题，必须有关联 defect issue；若同时有缺口，保留 No 并在 Findings 追加 Human Check，另列 human_check issue。NA 必须有原因。全部请求项目都包含在最终文件，不能只交 progress.json 或以省略项目掩盖未完成范围。evidence_gaps.json／handover 继续保留用于后续更新，报告交付不等于整体 audit 通过。两张表及既有列保持不变；Human Check 黄色标记。完整输入定义见 [report-schema.md](references/report-schema.md)。
 
 文件名：`{site name}_robots_audit_{YYYY-MM-DD}.xlsx`，日期按用户时区；已有文件不覆盖。
 
@@ -83,7 +83,7 @@ Main 默认 JS、关闭全站 HTML 存储；targeted profile 保存必要补查�
 
 不要求补齐所有 Googlebot／robots／rendering config。有效响应、header、meta robots、canonical 和可独立解释的 live robots 规则支持对应判断；只有结论依赖 SF 抓取行为且缺等效证据才核实相关设置。10.1／10.6／10.7 可以从直接 robots 证据继续，配置失败不代表这些项失败。其他缺口必须写明具体 URL／字段／结论和补充动作，不能只写“native app control failed”。缺少有效 sitemap 要说明发现范围，但不阻止其他有证据的检查。
 
-你手动运行并监督；持续 429、连接错误或 URL 循环时由你决定暂停／调整／继续／重跑。正常 404 或重定向保留作 audit 证据，不自动重启。完成后确认必要 Crawl Analysis 已结束，保存／导出到你实际的 Downloads 并提供路径和完成状态；自动数据库保存不等于文件已放到 Downloads。等待文件时返回可恢复 checkpoint，最终 Excel 仍遵守严格 Yes／No／NA 规则。
+你手动运行并监督；持续 429、连接错误或 URL 循环时由你决定暂停／调整／继续／重跑。正常 404 或重定向保留作 audit 证据，不自动重启。完成后确认必要 Crawl Analysis 已结束，保存／导出到你实际的 Downloads 并提供路径和完成状态；自动数据库保存不等于文件已放到 Downloads。等待文件时返回可恢复 checkpoint，最终 Excel 包含全部请求项；未解决项显示 Human Check 和人工核查动作，照样交付。
 
 将仓库作为 skill 导入，入口是根目录 [SKILL.md](SKILL.md)。默认可自动发现，也可显式调用 `$onsite-audit-robots`。导入 skill 不等于安装 Python 或连接 MCP。安装位置由你的客户端确定；仓库不自动改全局客户端设置。
 

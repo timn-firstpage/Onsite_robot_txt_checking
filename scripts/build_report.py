@@ -36,8 +36,9 @@ def required_text(row, fields):
 def normalize(data):
     if "overview" in data:
         raise ValueError("Legacy schema: migrate to checklist/issues with separate description and fix")
-    if data.get("evidence_gaps"):
-        raise ValueError("Audit incomplete: resolve evidence_gaps before exporting the final report")
+    gaps = data.get("evidence_gaps", [])
+    if not isinstance(gaps, list):
+        raise ValueError("evidence_gaps must be a list")
     requested = data.get("requested_checks", sorted(CHECK_IDS))
     if not isinstance(requested, list) or not requested or any(not isinstance(cid, str) or cid not in CHECK_IDS for cid in requested) or len(set(requested)) != len(requested):
         raise ValueError("requested_checks must contain unique supported check IDs")
@@ -50,24 +51,44 @@ def normalize(data):
         required_text(row, ["id", "check", "findings", "coverage"])
         if row["id"] not in CHECK_IDS or row["id"] in ids:
             raise ValueError("Unknown/duplicate check ID")
-        if row.get("result") not in {"Yes", "No", "NA"}:
-            raise ValueError("Final Result must be Yes, No or NA; resolve missing evidence first")
-        reason_field = "na_reason" if row["result"] == "NA" else None
+        if row.get("result") not in {"Yes", "No", "NA", "Human Check"}:
+            raise ValueError("Final Result must be Yes, No, NA or Human Check")
+        reason_field = {"NA": "na_reason", "Human Check": "human_check_reason"}.get(row["result"])
         if reason_field:
             required_text(row, [reason_field])
             if row[reason_field] not in row["findings"]:
                 row["findings"] += "\n" + row[reason_field]
         required_text(row, ["findings"])
+        if row["result"] == "Human Check" and "Human Check" not in row["findings"]:
+            row["findings"] = "Human Check: " + row["findings"]
+        required_text(row, ["findings"])
         ids[row["id"]] = row
     if set(ids) != set(requested):
         raise ValueError("Final report must include every requested check; do not silently omit unresolved checks")
-    unique, linked = {}, set()
+    unique, linked, human_linked = {}, set(), set()
     for source in issues:
         row = dict(source)
         required_text(row, ["issue", "description", "how_to_fix"])
         refs = row.get("check_ids")
-        if not isinstance(refs, list) or not refs or any(not isinstance(cid, str) or cid not in ids or ids[cid]["result"] != "No" for cid in refs):
-            raise ValueError("Each issue must link only to included No checks")
+        kind = row.get("kind", "defect")
+        if kind not in {"defect", "human_check"}:
+            raise ValueError("Issue kind must be defect or human_check")
+        permitted = {"No"} if kind == "defect" else {"No", "Human Check"}
+        if not isinstance(refs, list) or not refs or any(not isinstance(cid, str) or cid not in ids or ids[cid]["result"] not in permitted for cid in refs):
+            raise ValueError("Defects link to No; human_check issues link to No or Human Check")
+        if kind == "human_check":
+            if not row["issue"].startswith("Human Check"):
+                row["issue"] = "Human Check: " + row["issue"]
+            human_linked.update(refs)
+            for cid in refs:
+                if ids[cid]["result"] == "No":
+                    marker = row["issue"] + "\n" + row["description"] + "\n" + row["how_to_fix"]
+                    if marker not in ids[cid]["findings"]:
+                        ids[cid]["findings"] += "\n" + marker
+                    required_text(ids[cid], ["findings"])
+        else:
+            linked.update(refs)
+        required_text(row, ["issue"])
         addresses = row.get("addresses")
         if not isinstance(addresses, list) or not addresses or any(not isinstance(url, str) or not re.match(r"^https?://[^\s/]+(?:/[^\s]*)?$", url) for url in addresses):
             raise ValueError("Issue addresses must be absolute HTTP(S) URLs")
@@ -75,9 +96,21 @@ def normalize(data):
         required_text(row, ["address"])
         identity = tuple(row[field] for field in ["issue", "description", "how_to_fix", "address"])
         unique[identity] = row
-        linked.update(refs)
     if {cid for cid, row in ids.items() if row["result"] == "No"} != linked:
-        raise ValueError("Every No requires an Issues row")
+        raise ValueError("Every No requires a confirmed-defect Issues row")
+    if not {cid for cid, row in ids.items() if row["result"] == "Human Check"} <= human_linked:
+        raise ValueError("Every Human Check requires a human_check Issues row")
+    for gap in gaps:
+        if not isinstance(gap, dict):
+            raise ValueError("Each evidence gap must be an object")
+        required_text(gap, ["check", "missing", "next_action"])
+        cid = gap["check"]
+        if cid not in human_linked:
+            raise ValueError("Every evidence gap must link to a human_check issue and an unresolved check")
+        marker = "Human Check: " + gap["missing"] + "\n" + gap["next_action"]
+        if marker not in ids[cid]["findings"]:
+            ids[cid]["findings"] += "\n" + marker
+        required_text(ids[cid], ["findings"])
     return sorted(ids.values(), key=lambda r: tuple(map(int, r["id"].split(".")))), list(unique.values())
 
 
@@ -121,11 +154,11 @@ def build(data, output):
                         cell.font = Font(name="Calibri", size=11, color="0563C1", underline="single")
             sheet.row_dimensions[excel_row[0].row].height = min(409, max(30, line_count * 16 + 8))
             if title == "Checklist":
-                color = {"No": "FCE4D6", "NA": "E7E6E6"}.get(excel_row[1].value)
+                color = {"No": "FCE4D6", "NA": "E7E6E6", "Human Check": "FFF2CC"}.get(excel_row[1].value)
                 if color:
                     excel_row[1].fill = PatternFill("solid", fgColor=color)
         if title == "Checklist":
-            validation = DataValidation(type="list", formula1='"Yes,No,NA"', allow_blank=False)
+            validation = DataValidation(type="list", formula1='"Yes,No,NA,Human Check"', allow_blank=False)
             validation.showErrorMessage = True
             sheet.add_data_validation(validation)
             validation.add(f"B2:B{sheet.max_row}")
