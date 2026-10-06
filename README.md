@@ -144,3 +144,5 @@ Agent 先看首页／导航／页面内容、crawl／sitemap 的真实路由和�
 Findings／Coverage 记录网站性质的判断依据、选了哪些类别、排除了哪些及原因。collector 生成的通用候选清单不是强制检查清单，先按适用性筛选再补查。插件默认规则不能单独证明功能存在。没有有效 Disallow 的 No 规则保留，但 further validate 和修复建议必须按网站性质写，不建议无购物功能的网站新增购物车规则。
 
 问题页固定命名 **10. Robot.txt**，只列已确认 No 的问题。全部结果为 Human Check 时，这一页只有表头；已检查内容、缺口与人工动作保留在 Checklist。兼容旧输入中的 human_check issue：迁移到对应 Checklist Findings 后过滤，不丢失描述、动作或地址。
+
+非电商／无站内购物功能的网站，缺购物车或结账 Disallow 不算失败，也不建议补这些规则。若已有购物相关规则，Agent 在 Checklist Findings 说明与已知功能不匹配、可能为模板残留，建议确认用途后清理；这些规则不能充当适用样本通过的依据。仅有不适用规则不自动产生 No／问题行；确认误挡或违反明确网站策略时才列入 `10. Robot.txt`。
