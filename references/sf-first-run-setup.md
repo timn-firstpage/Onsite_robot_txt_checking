@@ -4,6 +4,8 @@ This filename remains the entry for older documentation links. Profile loading a
 
 ## Choose the route
 
+Supplied `.seospider` files use the common [saved-crawl entry contract](https://github.com/timn-firstpage/On-_site_SF_shared_config/blob/main/references/saved-crawl-entry.md), preferably its local shared-skill copy. Set source.mode=saved_crawl and source.crawl_file (relative to the config directory). Explicit supplied input wins over stale session IDs. Preflight readable/nonempty file and output/runtime once, distinguish .seospider from .seospiderconfig, reuse matching exports or open once through verified SF capabilities, and share fingerprint/export records with other onsite callers. No original-profile requirement or new-crawl permission is needed. Unsupported/rejected imports use manual **saved-crawl Open + exports**, not Configuration Load + Start. Preserve active/unsaved sessions and label historical versus current evidence.
+
 | Situation | Action |
 | --- | --- |
 | Suitable existing crawl/exports | Verify site, time, scope, completion and check-specific fields; reuse directly. No profile load or exhaustive historical-settings gate. |

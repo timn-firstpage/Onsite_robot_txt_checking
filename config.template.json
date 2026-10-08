@@ -8,6 +8,7 @@
   },
   "source": {
     "mode": "reuse_crawl",
+    "crawl_file": null,
     "crawl_id": null,
     "export_directory": null,
     "allow_new_crawl": false,

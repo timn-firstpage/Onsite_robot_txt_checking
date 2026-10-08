@@ -34,6 +34,8 @@ Agent-owned settings are execution instructions, not a proxy that automatically 
 
 ## Libraries and runtime
 
+Direct-file entry uses source.mode=saved_crawl and source.crawl_file, resolved against the supplied config directory. These are agent-owned fields: collect_robots.py does not import the binary. Shared preparation owns file preflight and supported saved-crawl Open/export; allow_new_crawl=false permits this existing-evidence route.
+
 Each flow keeps its own requirements.txt. The robots runtime currently requires Python 3.9+ and openpyxl>=3.1,<4; all collection helpers use standard libraries. The current HTTPS flow has the same third-party requirement, so one verified AUDIT_PYTHON/venv can serve both. If future dependency versions conflict, use separate environments/explicit interpreter paths instead of overwriting a shared environment. No pip/install/version changes happen merely by reading config. Author-only validation tooling (e.g. PyYAML) is not an audit runtime dependency.
 
 Shared primary crawl scope/budget comes from the orchestrator. Do not reinterpret max_live_requests as an SF page-count limit; the collector only enforces this on its counted requests. Maintain cumulative usage and approved overall budget, isolate robots supplemental evidence and coordinate profile transitions through shared preparation without overwriting site-specific settings. Metadata-first does not guarantee every decision can be made without source/rendered content.

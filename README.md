@@ -6,6 +6,8 @@
 
 ## 与 HTTPS flow 共用配置
 
+**支持直接提供已爬好的 `.seospider` 文件**：使用 `source.mode=saved_crawl` 和 `source.crawl_file`，或直接提供文件让 agent 解析路径。复用匹配导出，必要时通过 SF 支持的功能打开一次，与其他 onsite audits 共用结果；不重载 global config、不自动重爬。没有 reader 时只要求用户打开已有 crawl 并导出指定结果。`.seospiderconfig` 是配置文件，不是 crawl。详见 [共用 saved-crawl 操作与报错说明](https://github.com/timn-firstpage/On-_site_SF_shared_config/blob/main/references/saved-crawl-entry.md)。
+
 沿用 HTTPS flow 的连接与运行配置结构，但本仓库模板只包含 robots 适用的字段。共用 `site`、`source`、`mcp`、预算和输出设置；各 flow 分别保留自己的检查设置及 requirements.txt。完整字段分工见 [config.md](references/config.md)。
 
 - 同一 agent 可传入同一份 resolved config，复用 SF crawl、MCP 连接和 AUDIT_PYTHON。
