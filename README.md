@@ -33,23 +33,23 @@
 
 | Item | 怎么检查 | 结果判断 |
 | --- | --- | --- |
-| **10.1 Does a robots.txt document exist?** | 请求小写 `/robots.txt`，保存状态、跳转和原文，检查有效指令、空文件及错误 HTML。 | **Yes**：有效文件。**No**：确认不存在、内容无效、空白或仅注释。**Human Check**：403、429、超时或截断等使结果无法确认。 |
-| **10.2 Are sections of the site that we want indexed, being disallowed with robots.txt?** | 提取 sitemap URL，逐条判断有效 Googlebot 规则。没有可用 sitemap 时，用已有 crawl／真实链接建立替代清单；不额外要求页面分类、noindex 或内容验证。 | **Yes**：检查范围中的 URL 全部未被挡。**No**：确认有 URL 被挡，列地址及匹配规则。**NA**：robots.txt 确认不存在，或用户明确不用检查。**Human Check**：清单／权限证据不完整，写明已查和未查范围。 |
-| **10.3 Are disallow blocks in place for URLs that Google shouldn't be crawling?** | Agent 先根据实际内容、导航、功能和用户信息判断网站性质，选择适用的有限样本，再检查有效 Googlebot 规则。购物车、结账、账户等是可选类别，不是所有网站的必选项目。 | **Yes**：选定的适用样本全部被挡，且没有确认模板残留等其他问题，注明样本范围。**No**：确认有不适用／未清理的模板规则；可读 robots 完全没有适用于 Googlebot 的非空 Disallow；或确认应限制的真实 URL 未被挡。确认模板残留写入 `10. Robot.txt`，列依据及清理方法；无 Disallow 写 further validate 建议。**Human Check**：规则不明确，或未挡候选的存在性／适用性未确认。**NA**：确认缺文件、明确不检查，或有依据证明检查不适用；无有效 Disallow 的 No 约定优先。 |
-| **10.4 Are we allowing bot access to CSS and JS documents?** | 从 SF 类型／Content Type／真实 stylesheet或script引用确认 CSS／JS，关联需要索引的公开页面，检查有效 Googlebot 权限及响应。HTML login/reset 页面本身不当作 CSS／JS；仅供已确认私有／不需索引页使用的资源记录排除，共用的公开页资源仍检查。 | **Yes**：适用公开页资源确认允许抓取且可用。**No**：必要公开页资源有效被挡或失效；HTTP 200 不会把 robots blocked 变成 allowed。**Human Check**：SF 抓取／导出错误，或缺少资源、关系、权限结果。**NA**：完整清单证明没有适用的链接 CSS／JS。 |
-| **10.5 Are the following pages disallow? shopping carts, thank you, admin, duplicate content, account pages.** | 优先用真实 URL，按实际功能补充有限候选；确认页面类别后，检查对应策略，见下表。 | **Yes**：适用类别全部符合策略。**No**：确认存在不符合策略的页面。**NA**：类别确实不适用，写依据和范围。**Human Check**：用途或实际控制无法确认。 |
-| **10.6 Is the robots.txt called robots.txt, and not ROBOTS.TXT?** | 验证小写 `/robots.txt` 是否返回有效文件；小写正常时不强制再试大写，也不猜服务器文件名。 | **Yes**：小写入口有效。**No**：小写内容无效，或确认只有错误大小写入口有效。**NA**：确认文件不存在，引用 10.1。**Human Check**：请求失败，无法判断。 |
-| **10.7 Is there a link in the robots.txt file to the sitemap index/sitemap?** | 在完整 robots 原文中检查至少一个有效的绝对 HTTP／HTTPS `Sitemap:` URL。 | **Yes**：有有效声明。**No**：已读取文件没有有效声明。**NA**：robots 文件确认不存在。**Human Check**：原文无法完整取得。Sitemap 下载 429 单独记录，不把有效声明变成 No。 |
+| **10.1 Does a robots.txt document exist?** | 请求小写 `/robots.txt`，保存状态、跳转和原文，检查有效指令、空文件及错误 HTML。 | **√**：有效文件。**X**：确认不存在、内容无效、空白或仅注释。**Human Check**：403、429、超时或截断等使结果无法确认。 |
+| **10.2 Are sections of the site that we want indexed, being disallowed with robots.txt?** | 提取 sitemap URL，逐条判断有效 Googlebot 规则。没有可用 sitemap 时，用已有 crawl／真实链接建立替代清单；不额外要求页面分类、noindex 或内容验证。 | **√**：检查范围中的 URL 全部未被挡。**X**：确认有 URL 被挡，列地址及匹配规则。**NA**：robots.txt 确认不存在，或用户明确不用检查。**Human Check**：清单／权限证据不完整，写明已查和未查范围。 |
+| **10.3 Are disallow blocks in place for URLs that Google shouldn't be crawling?** | Agent 先根据实际内容、导航、功能和用户信息判断网站性质，选择适用的有限样本，再检查有效 Googlebot 规则。购物车、结账、账户等是可选类别，不是所有网站的必选项目。 | **√**：选定的适用样本全部被挡，且没有确认模板残留等其他问题，注明样本范围。**X**：确认有不适用／未清理的模板规则；可读 robots 完全没有适用于 Googlebot 的非空 Disallow；或确认应限制的真实 URL 未被挡。确认模板残留写入 `10. Robot.txt`，列依据及清理方法；无 Disallow 写 further validate 建议。**Human Check**：规则不明确，或未挡候选的存在性／适用性未确认。**NA**：确认缺文件、明确不检查，或有依据证明检查不适用；无有效 Disallow 的 No 约定优先。 |
+| **10.4 Are we allowing bot access to CSS and JS documents?** | 从 SF 类型／Content Type／真实 stylesheet或script引用确认 CSS／JS，关联需要索引的公开页面，检查有效 Googlebot 权限及响应。HTML login/reset 页面本身不当作 CSS／JS；仅供已确认私有／不需索引页使用的资源记录排除，共用的公开页资源仍检查。 | **√**：适用公开页资源确认允许抓取且可用。**X**：必要公开页资源有效被挡或失效；HTTP 200 不会把 robots blocked 变成 allowed。**Human Check**：SF 抓取／导出错误，或缺少资源、关系、权限结果。**NA**：完整清单证明没有适用的链接 CSS／JS。 |
+| **10.5 Are the following pages disallow? shopping carts, thank you, admin, duplicate content, account pages.** | 优先用真实 URL，按实际功能补充有限候选；确认页面类别后，检查对应策略，见下表。 | **√**：适用类别全部符合策略。**X**：确认存在不符合策略的页面。**NA**：类别确实不适用，写依据和范围。**Human Check**：用途或实际控制无法确认。 |
+| **10.6 Is the robots.txt called robots.txt, and not ROBOTS.TXT?** | 验证小写 `/robots.txt` 是否返回有效文件；小写正常时不强制再试大写，也不猜服务器文件名。 | **√**：小写入口有效。**X**：小写内容无效，或确认只有错误大小写入口有效。**NA**：确认文件不存在，引用 10.1。**Human Check**：请求失败，无法判断。 |
+| **10.7 Is there a link in the robots.txt file to the sitemap index/sitemap?** | 在完整 robots 原文中检查至少一个有效的绝对 HTTP／HTTPS `Sitemap:` URL。 | **√**：有有效声明。**X**：已读取文件没有有效声明。**NA**：robots 文件确认不存在。**Human Check**：原文无法完整取得。Sitemap 下载 429 单独记录，不把有效声明变成 No。 |
 
 ### 10.3 按网站性质选择样本
 
 - 有真实购物功能才选择适用购物车／结账样本；企业展示站、内容站、会员站按实际功能选择搜索、筛选、账户或其他有依据的低价值路径。
 - 非电商／无站内购物功能的网站，缺购物车或结账 Disallow 不算失败，也不建议补这些规则。普通分类页和正常分页不被统一要求 Disallow。
-- **确认有不适用的购物／其他模板残留规则：10.3 判 No／X，并写入 `10. Robot.txt`。** Findings 直接点明残留规则及不适用原因，Coverage 放检查来源和范围；问题页列明实际规则、网站不适用的依据及针对性的清理动作；不要求先证明误挡或安全问题。只是疑似、用途未确认时，写 Human Check，仅留 Checklist。即使其他适用样本全部被挡，确认模板残留仍优先判 No。
+- **确认有不适用的购物／其他模板残留规则：10.3 判 No／X，并写入 `10. Robot.txt`。** Findings 直接点明残留规则及不适用原因，内部证据保留检查来源和范围；问题页列明实际规则、网站不适用的依据及针对性的清理动作；不要求先证明误挡或安全问题。只是疑似、用途未确认时，写 Human Check，仅留 Checklist。即使其他适用样本全部被挡，确认模板残留仍优先判 No。
 - 完全没有有效 Disallow 仍按约定判 No；进一步验证建议必须针对实际网站功能，不推断安全泄露，也不建议添加无关规则。
-- Findings／Coverage 写清网站性质的判断依据、选定及排除类别和原因。collector 的通用候选清单只提供线索；先筛选再补查，不无限枚举。
+- 内部证据写清网站性质的判断依据、选定及排除类别和原因。collector 的通用候选清单只提供线索；先筛选再补查，不无限枚举。
 
-检查项目名称固定使用上述英文原文，保留原有标点和语法，不改写、不缩短，也不因报告使用中文而翻译。代码会按编号输出固定名称；Findings／Coverage 使用易懂的报告语言。
+检查项目名称固定使用上述英文原文，保留原有标点和语法，不改写、不缩短，也不因报告使用中文而翻译。代码会按编号输出固定名称；Findings／Instruction 使用易懂的报告语言。
 
 ### 10.5 特殊页面策略
 
@@ -107,15 +107,15 @@ flowchart TD
         N --> O
     end
 
-    O --> Y["Yes：检查范围符合规则"]
-    O --> X["No：确认问题或约定 audit 标准不符合"]
+    O --> Y["√：检查范围符合规则"]
+    O --> X["X：确认问题或约定 audit 标准不符合"]
     O --> NA["NA：符合该项不适用边界，写原因"]
-    O --> HC["Human Check：具体证据缺口<br/>Findings：结论、缺口、动作<br/>Coverage：已查与未查范围"]
+    O --> HC["Human Check：具体证据缺口<br/>Findings：结论及原因<br/>Instruction：人需要做的下一步"]
     Y --> P["写入并验证 findings<br/>缺请求项补为 Human Check，不遗漏检查"]
     X --> P
     NA --> P
     HC --> P
-    P --> Q["先交付最终 Excel<br/>Checklist：全部请求项及核查说明<br/>10. Robot.txt：仅确认 No；无问题则只留表头"]
+    P --> Q["先交付最终 Excel<br/>Checklist：全部请求项及核查说明<br/>10. Robot.txt：仅确认 X，Issue 加编号；无问题则只留表头"]
     Q --> R{"剩余证据必须依赖 SF／渲染？"}
     R -->|不需要| DONE["本次交付完成"]
     R -->|需要| S{"允许请求新 crawl？"}
@@ -145,25 +145,24 @@ robots.txt 中的 add-to-cart、woocommerce 上传目录或日志路径，只作
 
 | Sheet | Columns |
 | --- | --- |
-| Checklist | Check · Result · Findings · Coverage |
+| Checklist | Check · Result · Findings · Instruction |
 | 10. Robot.txt | Issue · Issue Description · How to Fix · Address |
 
-Result 使用 **Yes / No / NA / Human Check**。证据不足也照样输出最终 Excel，不等补查完成、不留空、不把缺证据填成 NA 或已确认 No。每个 Human Check 在 Findings 简短写“结论／具体缺口＋必要的下一步”，通常一至三行；已检查内容、数量、来源、抽样及未覆盖范围统一写 Coverage，Findings 不重复这些内容，Human Check 只保留在 Checklist，不写入 `10. Robot.txt`。No 只代表确认问题，必须有关联 defect issue；若同时有缺口，保留 No 并在 Findings 追加 Human Check，不另列核查 Issue。NA 必须有原因。全部请求项目都包含在最终文件，不能只交 progress.json 或以省略项目掩盖未完成范围。evidence_gaps.json／handover 继续保留用于后续更新，报告交付不等于整体 audit 通过。两张表及既有列保持不变；Human Check 黄色标记。完整输入定义见 [report-schema.md](references/report-schema.md)。缺行或缺核查原因／动作时，通过 `--site-url` 明确启用交付补齐，补为 Human Check；`--prepared-input` 保存实际交付输入。无关字段或未确认历史 config 不阻止有独立证据的判断。
+Result 使用 **√ / X / NA / Human Check**，不再显示 Yes／No。七个 item name 保持你的英文原文。Coverage 列已移除，检查范围、来源及数量留在内部证据；重要限制用一句话写在 Findings，避免把抽样说成全站通过。
 
-Findings 使用 Excel 单元格内的**局部加粗**，提高扫描可读性：已检查、结论、缺口／错误、下一步动作等标签自动加粗；Agent 通过内部 `findings_bold` 指定关键结论、阻挡原因或排除依据。没有标签的短开头结论也会加粗。正文、完整 URL、换行和原有列保留，不把整段文字统一加粗，也不在 Excel 显示 Markdown 星号。详见 [Findings 加粗输入](references/report-schema.md#findings-emphasis)。
+**Findings：发现了什么＋简短原因。Instruction：人需要做的下一步。** 两列使用普通读者能理解的词；Findings 通常一至两句，重点局部加粗；Instruction 通常一句动词开头的话，没有要做的事情就填 `—`。不要在 Instruction 重复发现、堆技术步骤或放原有 Coverage。
 
-文件名：`{site name}_robots_audit_{YYYY-MM-DD}.xlsx`，日期按用户时区；已有文件不覆盖。
+| Result | Findings | Instruction |
+| --- | --- | --- |
+| √ | robots.txt 已列出网站地图链接。 | — |
+| X | **发现无用的购物车规则** `/*?add-to-cart=`，已确认本站不需要这条限制。 | 请删除这条无用规则。 |
+| Human Check | 尚未确认哪些前台页面使用这些文件。 | 请补充这些文件的引用页面。 |
 
-Findings 面向不熟悉 SEO 的读者：**先说发现了什么，再说具体原因；需要补查才写下一步。** 避免只写「缺少 inlinks」「有效权限证据不足」等内部术语；例如写「尚未确认哪些前台页面使用这些文件，请补充页面与文件的引用资料」。保留必要的路径和规则，说明其含义，通常一至三句；数量、来源和范围留在 Coverage。[各项写法示例](references/report-schema.md#plain-language-findings)。
+`10. Robot.txt` 的 **Issue 自动加对应编号**，例如 `10.1 Missing robots.txt`、`10.3 Unused shopping cart rules`。同一问题涉及多个项目时列全编号，例如 `10.1, 10.7 Empty robots.txt`，不额外增加编号列。
 
-Human Check 示例仅说明写法，不是实际网站结果：
+证据不足仍交付全部请求项；Human Check 的原因留在 Findings、动作留在 Instruction，不写入问题页。X 必须有对应确认问题；没有确认问题时保留问题页四列表头。NA 必须有原因。旧 JSON 的 Yes／No 和 coverage 仍可读取：结果转为 √／X，coverage 不展示；明确标记的 Next action／下一步会移入 Instruction。
 
-| Findings | Coverage |
-| --- | --- |
-| **Human Check：**导出资料不完整，尚未确认剩余页面是否被 robots.txt 阻挡。**下一步：**补充这些页面的抓取权限结果。 | 来源：robots.txt、sitemap、SF 导出；75／80 条权限已验证允许，5 条未确认。 |
-
-Human Check 不进入 `10. Robot.txt`。No 同时有缺口时，问题页保留确认问题，未验证范围只写在 Checklist。没有确认问题时，问题页只保留四列表头。旧输入中的 human_check issue 描述及动作迁移到 Checklist Findings，地址放 Coverage；原始输入保留用于追溯。
-
+完整输入与写法见 [report-schema.md](references/report-schema.md)。使用 `--site-url` 补齐缺项为 Human Check，`--prepared-input` 保存交付输入。文件名保持 `{site name}_robots_audit_{YYYY-MM-DD}.xlsx`，按用户时区，不覆盖旧文件。
 
 ## 使用
 

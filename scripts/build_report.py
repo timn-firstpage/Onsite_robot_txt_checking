@@ -23,14 +23,14 @@ REVIEW_ACTIONS = {
     '10.1': 'Open /robots.txt and check whether it loads and contains robots rules or a sitemap link.',
     '10.2': 'Check whether robots.txt allows Google to crawl the pages still awaiting review.',
     '10.3': 'Identify which pages should be kept out of crawling, then check whether robots.txt blocks them.',
-    '10.4': 'Check which public pages use the affected style or script files and whether Google can fetch those files.',
-    '10.5': 'Confirm what the affected pages are used for and whether the required crawl, indexing or login controls are in place.',
+    '10.4': 'Export the pages that use these files and their crawl results.',
+    '10.5': 'Confirm what these pages do and how access is restricted.',
     '10.6': 'Check whether the lowercase /robots.txt address loads the correct file.',
     '10.7': 'Check whether robots.txt contains a complete sitemap link, starting with http:// or https://.',
 }
 
 SHEETS = {
-    "Checklist": (["Check", "Result", "Findings", "Coverage"], ["check", "result", "findings", "coverage"]),
+    "Checklist": (["Check", "Result", "Findings", "Instruction"], ["check", "result", "findings", "instruction"]),
     "10. Robot.txt": (["Issue", "Issue Description", "How to Fix", "Address"], ["issue", "description", "how_to_fix", "address"]),
 }
 
@@ -53,6 +53,34 @@ def required_text(row, fields):
             raise ValueError(f"Missing/non-string {field}")
         if len(row[field]) > 32767:
             raise ValueError(f"{field} exceeds Excel cell limit; split issue groups")
+
+
+def add_instruction(row, text):
+    """Keep human actions separate and retain each exact action once."""
+    if not isinstance(text, str):
+        raise ValueError('instruction must be a string')
+    lines = [] if row.get('instruction', '') in {'', '—'} else row['instruction'].splitlines()
+    for line in text.splitlines():
+        line = line.strip()
+        if line and line != '—' and line not in lines:
+            lines.append(line)
+    row['instruction'] = '\n'.join(lines)
+
+
+def separate_legacy_actions(row):
+    """Migrate explicitly labelled old actions; never guess prose meaning."""
+    pattern = r'(?im)(?:^|\n|[ \t]+)(?:Next action|下一步(?:动作)?|Instruction)\s*[:：]\s*([^\n]*)'
+    def move(match):
+        add_instruction(row, match.group(1))
+        return ''
+    row['findings'] = re.sub(pattern, move, row['findings']).strip()
+
+
+def numbered_issue(row):
+    ids = sorted(set(row['check_ids']), key=lambda cid: tuple(map(int, cid.split('.'))))
+    # Derive numbers from associations, including already-prefixed legacy titles.
+    title = re.sub(r'^10\.[1-7](?:\s*[,/、]\s*10\.[1-7])*[ :：-]+', '', row['issue'])
+    return ', '.join(ids) + ' ' + title
 
 
 def rich_findings(text, phrases=()):
@@ -135,6 +163,7 @@ def complete_for_export(data, site_url):
             rows.append(row)
             ids[cid] = row
         row = ids[cid]
+        row['result'] = {'√': 'Yes', 'X': 'No'}.get(row.get('result'), row.get('result'))
         check_gaps = by_check.get(cid, [])
         if check_gaps and row.get('result') in {'Yes', 'NA'}:
             row['findings'] = 'Earlier provisional result: ' + row['result'] + '.\n' + row.get('findings', '')
@@ -146,7 +175,7 @@ def complete_for_export(data, site_url):
             row.setdefault('human_check_reason', reason)
             if not row['human_check_reason']:
                 row['human_check_reason'] = reason
-        action = '\n'.join(gap['next_action'] for gap in check_gaps) or row.get('human_check_action') or REVIEW_ACTIONS[cid]
+        action = '\n'.join(gap['next_action'] for gap in check_gaps) or row.get('instruction') or row.get('human_check_action') or REVIEW_ACTIONS[cid]
         row['human_check_action'] = action
     completed_rows, defects = normalize(result)
     result['checklist'] = completed_rows
@@ -169,7 +198,13 @@ def normalize(data):
     ids = {}
     for source in checks:
         row = dict(source)
-        required_text(row, ["id", "check", "findings", "coverage"])
+        required_text(row, ["id", "check", "findings"])
+        row['result'] = {'√': 'Yes', 'X': 'No'}.get(row.get('result'), row.get('result'))
+        row.setdefault('coverage', '')  # Optional archived evidence, not an Excel column.
+        row.setdefault('instruction', '')
+        if not isinstance(row['instruction'], str):
+            raise ValueError('instruction must be a string')
+        separate_legacy_actions(row)
         phrases = row.get('findings_bold', [])
         if not isinstance(phrases, list) or any(not isinstance(phrase, str) or not phrase.strip() for phrase in phrases):
             raise ValueError('findings_bold must be a list of non-empty exact text phrases')
@@ -204,18 +239,19 @@ def normalize(data):
             raise ValueError("Defects link to No; human_check issues link to No or Human Check")
         if kind == "human_check":
             # Compatibility: move legacy review rows to Checklist, never the defect tab.
-            marker = 'Human Check: ' + row['issue'] + '\n' + row['description'] + '\nNext action: ' + row['how_to_fix']
+            marker = 'Human Check: ' + row['issue'] + '\n' + row['description']
             addresses = row.get('addresses', [])
             if not isinstance(addresses, list) or any(not isinstance(url, str) for url in addresses):
                 raise ValueError('Legacy review addresses must be a list of strings')
             for cid in refs:
+                add_instruction(ids[cid], row['how_to_fix'])
                 if marker not in ids[cid]['findings']:
                     ids[cid]['findings'] += '\n' + marker
                 if addresses:
                     coverage_note = 'Review addresses: ' + '\n'.join(dict.fromkeys(addresses))
                     if coverage_note not in ids[cid]['coverage']:
                         ids[cid]['coverage'] += '\n' + coverage_note
-                required_text(ids[cid], ['findings', 'coverage'])
+                required_text(ids[cid], ['findings', 'instruction'])
             continue
         linked.update(refs)
         required_text(row, ["issue"])
@@ -231,6 +267,12 @@ def normalize(data):
             unique[identity] = row
     if {cid for cid, row in ids.items() if row["result"] == "No"} != linked:
         raise ValueError("Every No requires a confirmed-defect row in 10. Robot.txt")
+    # Keep the repair step even when a separate evidence gap also needs follow-up.
+    for cid, row in ids.items():
+        if not row['instruction'] and row['result'] == 'No':
+            for issue in unique.values():
+                if cid in issue['check_ids']:
+                    add_instruction(row, issue['how_to_fix'])
     for gap in gaps:
         if not isinstance(gap, dict):
             raise ValueError("Each evidence gap must be an object")
@@ -240,18 +282,17 @@ def normalize(data):
             raise ValueError("Every evidence gap must reference a No or Human Check Checklist row")
         if gap["missing"] not in ids[cid]["findings"]:
             ids[cid]["findings"] += "\nHuman Check: " + gap["missing"]
-        if gap["next_action"] not in ids[cid]["findings"]:
-            ids[cid]["findings"] += "\nNext action: " + gap["next_action"]
+        add_instruction(ids[cid], gap['next_action'])
         required_text(ids[cid], ["findings"])
     for cid, row in ids.items():
-        if row['result'] == 'Human Check' or row.get('human_check_action'):
-            gap_actions = '\n'.join(gap['next_action'] for gap in gaps if gap['check'] == cid)
-            action = row.get('human_check_action') or gap_actions or REVIEW_ACTIONS[cid]
-            required_text({'action': action}, ['action'])
-            for action_line in dict.fromkeys(action.splitlines()):
-                if action_line and action_line not in row['findings']:
-                    row['findings'] += '\nNext action: ' + action_line
-            required_text(row, ['findings'])
+        # A supplied human instruction wins over generic default wording.
+        if row.get('human_check_action'):
+            add_instruction(row, row['human_check_action'])
+        if not row['instruction'] and row['result'] == 'Human Check':
+            add_instruction(row, REVIEW_ACTIONS[cid])
+        if not row['instruction']:
+            row['instruction'] = '—'
+        required_text(row, ['findings', 'instruction'])
     return sorted(ids.values(), key=lambda r: tuple(map(int, r["id"].split(".")))), list(unique.values())
 
 
@@ -268,6 +309,9 @@ def build(data, output, site_url=None):
     output.parent.mkdir(parents=True, exist_ok=True)
     wb = Workbook()
     wb.remove(wb.active)
+    # Keep internal legacy Yes/No compatibility; Excel only displays the symbols.
+    checklist = [dict(row, result={'Yes': '√', 'No': 'X'}.get(row['result'], row['result'])) for row in checklist]
+    issues = [dict(row, issue=numbered_issue(row)) for row in issues]
     datasets = {"Checklist": checklist, "10. Robot.txt": issues}
     widths = {"Checklist": [64, 14, 90, 64], "10. Robot.txt": [42, 90, 80, 90]}
     for title, (headers, fields) in SHEETS.items():
@@ -300,11 +344,11 @@ def build(data, output, site_url=None):
                 source = checklist[row_index]
                 excel_row[2].value = rich_findings(source['findings'], source.get('findings_bold', []))
                 excel_row[2].data_type = 's'
-                color = {"No": "FCE4D6", "NA": "E7E6E6", "Human Check": "FFF2CC"}.get(excel_row[1].value)
+                color = {"X": "FCE4D6", "NA": "E7E6E6", "Human Check": "FFF2CC"}.get(excel_row[1].value)
                 if color:
                     excel_row[1].fill = PatternFill("solid", fgColor=color)
         if title == "Checklist":
-            validation = DataValidation(type="list", formula1='"Yes,No,NA,Human Check"', allow_blank=False)
+            validation = DataValidation(type="list", formula1='"√,X,NA,Human Check"', allow_blank=False)
             validation.showErrorMessage = True
             sheet.add_data_validation(validation)
             validation.add(f"B2:B{sheet.max_row}")

@@ -63,7 +63,8 @@ class ReportTests(unittest.TestCase):
             wb=load_workbook(output)
             self.assertEqual(wb.sheetnames,['Checklist','10. Robot.txt'])
             self.assertEqual(wb['10. Robot.txt'].max_row,1)
-            self.assertIn('Export the missing resource rows.',wb['Checklist']['C2'].value)
+            self.assertIn('Export the missing resource rows.',wb['Checklist']['D2'].value)
+            self.assertNotIn('Export the missing resource rows.',wb['Checklist']['C2'].value)
             self.assertEqual(wb['Checklist']['B2'].fill.fgColor.rgb,'00FFF2CC')
             wb.close()
 
@@ -76,7 +77,7 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(len(issues),1)
         self.assertEqual(issues[0]['issue'],'Empty robots.txt')
         self.assertIn('Other origin unverified.',rows[0]['findings'])
-        self.assertIn('Check the other origin response.',rows[0]['findings'])
+        self.assertIn('Check the other origin response.',rows[0]['instruction'])
 
     def test_partial_evidence_and_actions_stay_in_checklist_without_review_issue(self):
         data={'requested_checks':['10.2'],'checklist':[{
@@ -91,10 +92,11 @@ class ReportTests(unittest.TestCase):
             output=Path(directory)/'audit.xlsx';build(prepared,output)
             wb=load_workbook(output)
             self.assertNotIn('75',wb['Checklist']['C2'].value)
-            self.assertIn('75/80',wb['Checklist']['D2'].value)
+            self.assertNotIn('75/80',wb['Checklist']['D2'].value)
+            self.assertIn('75/80',prepared['checklist'][0]['coverage'])
             self.assertIn('five unresolved',wb['Checklist']['D2'].value)
             self.assertIn('Five effective permission results unavailable',wb['Checklist']['C2'].value)
-            self.assertIn('five unresolved permission results',wb['Checklist']['C2'].value)
+            self.assertIn('five unresolved permission results',wb['Checklist']['D2'].value)
             self.assertEqual(wb['10. Robot.txt'].max_row,1)
             wb.close()
 
@@ -162,11 +164,11 @@ class ReportTests(unittest.TestCase):
             self.assertEqual(result['issues'],1)
             wb=load_workbook(output)
             self.assertEqual(wb.sheetnames,['Checklist','10. Robot.txt'])
-            self.assertEqual([c.value for c in wb['Checklist'][1]],['Check','Result','Findings','Coverage'])
+            self.assertEqual([c.value for c in wb['Checklist'][1]],['Check','Result','Findings','Instruction'])
             self.assertEqual([c.value for c in wb['10. Robot.txt'][1]],['Issue','Issue Description','How to Fix','Address'])
             self.assertIn(data['checklist'][2]['na_reason'],wb['Checklist']['C4'].value)
-            self.assertEqual(wb['Checklist']['B3'].value,'Yes')
-            self.assertEqual(wb['Checklist'].data_validations.dataValidation[0].formula1,'"Yes,No,NA,Human Check"')
+            self.assertEqual(wb['Checklist']['B3'].value,'√')
+            self.assertEqual(wb['Checklist'].data_validations.dataValidation[0].formula1,'"√,X,NA,Human Check"')
             self.assertEqual(wb['10. Robot.txt']['D2'].value,data['issues'][0]['addresses'][0])
             self.assertEqual(wb['10. Robot.txt']['B2'].data_type,'s')
             self.assertEqual(len(wb['Checklist'].data_validations.dataValidation),1)
@@ -209,9 +211,9 @@ class ReportTests(unittest.TestCase):
             wb=load_workbook(Path(directory)/'audit.xlsx')
             self.assertEqual(wb['Checklist']['B3'].value,'Human Check')
             self.assertIn('Human Check',wb['Checklist']['C3'].value)
-            self.assertIn('Export source page/resource pairs',wb['Checklist']['C3'].value)
+            self.assertIn('Export source page/resource pairs',wb['Checklist']['D3'].value)
             self.assertEqual(wb['10. Robot.txt'].max_row,2)
-            self.assertEqual(wb['10. Robot.txt']['A2'].value,'Empty robots.txt')
+            self.assertEqual(wb['10. Robot.txt']['A2'].value,'10.1 Empty robots.txt')
             self.assertIn('Resource coverage unverified',wb['Checklist']['C3'].value)
             self.assertEqual(wb['Checklist']['B3'].fill.fgColor.rgb,'00FFF2CC')
             wb.close()
@@ -229,7 +231,8 @@ class ReportTests(unittest.TestCase):
         data['checklist'][1]['human_check_reason']='Resource results incomplete.'
         rows,issues=normalize(data)
         self.assertEqual(rows[1]['result'],'Human Check')
-        self.assertIn('Next action:',rows[1]['findings'])
+        self.assertTrue(rows[1]['instruction'])
+        self.assertNotIn('Next action:',rows[1]['findings'])
         self.assertEqual(len(issues),1)
 
     def test_all_seven_unresolved_checks_still_export_final_workbook(self):
@@ -246,7 +249,7 @@ class ReportTests(unittest.TestCase):
             self.assertEqual([wb['Checklist'].cell(i,2).value for i in range(2,9)],['Human Check']*7)
             self.assertEqual(wb['10. Robot.txt'].max_row,1)
             self.assertEqual(result['issues'],0)
-            self.assertIn('Obtain required evidence',wb['Checklist']['C2'].value)
+            self.assertIn('Obtain required evidence',wb['Checklist']['D2'].value)
             wb.close()
 
     def test_confirmed_no_with_review_issue_keeps_defect_and_visible_gap(self):
@@ -257,7 +260,7 @@ class ReportTests(unittest.TestCase):
         rows,issues=normalize(data)
         self.assertEqual(rows[0]['result'],'No')
         self.assertIn('Human Check',rows[0]['findings'])
-        self.assertIn('Check secondary origin',rows[0]['findings'])
+        self.assertIn('Check secondary origin',rows[0]['instruction'])
         self.assertEqual(len(issues),1)
         self.assertNotIn('https://www.example.com/robots.txt',rows[0]['findings'])
         self.assertIn('https://www.example.com/robots.txt',rows[0]['coverage'])
@@ -274,7 +277,8 @@ class ReportTests(unittest.TestCase):
         prepared=complete_for_export(data,'https://example.com/')
         row=prepared['checklist'][0]
         self.assertEqual(row['findings'].count(reason),1)
-        self.assertEqual(row['findings'].count(action),1)
+        self.assertNotIn(action,row['findings'])
+        self.assertEqual(row['instruction'].count(action),1)
         self.assertNotIn('six login assets',row['findings'])
         self.assertEqual(row['coverage'],data['checklist'][0]['coverage'])
         self.assertEqual(complete_for_export(prepared,'https://example.com/'),prepared)

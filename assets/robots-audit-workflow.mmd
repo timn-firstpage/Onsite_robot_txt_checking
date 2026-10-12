@@ -24,15 +24,15 @@ flowchart TD
         N --> O
     end
 
-    O --> Y["Yes：检查范围符合规则"]
-    O --> X["No：确认问题或约定 audit 标准不符合"]
+    O --> Y["√：检查范围符合规则"]
+    O --> X["X：确认问题或约定 audit 标准不符合"]
     O --> NA["NA：符合该项不适用边界，写原因"]
-    O --> HC["Human Check：具体证据缺口<br/>Findings：结论、缺口、动作<br/>Coverage：已查与未查范围"]
+    O --> HC["Human Check：具体证据缺口<br/>Findings：结论及原因<br/>Instruction：人需要做的下一步"]
     Y --> P["写入并验证 findings<br/>缺请求项补为 Human Check，不遗漏检查"]
     X --> P
     NA --> P
     HC --> P
-    P --> Q["先交付最终 Excel<br/>Checklist：全部请求项及核查说明<br/>10. Robot.txt：仅确认 No；无问题则只留表头"]
+    P --> Q["先交付最终 Excel<br/>Checklist：全部请求项及核查说明<br/>10. Robot.txt：仅确认 X，Issue 加编号；无问题则只留表头"]
     Q --> R{"剩余证据必须依赖 SF／渲染？"}
     R -->|不需要| DONE["本次交付完成"]
     R -->|需要| S{"允许请求新 crawl？"}
