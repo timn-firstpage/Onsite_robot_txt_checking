@@ -4,10 +4,10 @@ Agent-reviewed decisions go into findings.json. Deliver exactly two worksheets:
 
 | Sheet | Columns |
 | --- | --- |
-| Checklist | Check; Result; Findings; Instruction |
+| Checklist | Item No.; Item Name; Initial Check; Findings; Instruction |
 | 10. Robot.txt | Issue; Issue Description; How to Fix; Address |
 
-The Check values retain the exact original English item names listed in SKILL.md, prefixed by their IDs. Never paraphrase, shorten, correct grammar or translate these names. Report language applies to Findings, Instruction and issue explanations.
+Item No. contains the check ID. Item Name contains the exact original English item name listed in SKILL.md, without an ID prefix. The JSON id/check fields remain compatible with existing inputs. Never paraphrase, shorten, correct grammar or translate these names. Report language applies to Findings, Instruction and issue explanations.
 
 Result displays **√ / X / NA / Human Check**. √ means the check passes; X means a confirmed defect or failure of the agreed audit standard. For 10.2, √ means the important pages were not incorrectly blocked. Legacy JSON Yes/No remains accepted and is rendered as √/X; the normalizer uses Yes/No internally. NA and Human Check are never converted to √ or X.
 

@@ -30,7 +30,7 @@ REVIEW_ACTIONS = {
 }
 
 SHEETS = {
-    "Checklist": (["Check", "Result", "Findings", "Instruction"], ["check", "result", "findings", "instruction"]),
+    "Checklist": (["Item No.", "Item Name", "Initial Check", "Findings", "Instruction"], ["id", "item_name", "result", "findings", "instruction"]),
     "10. Robot.txt": (["Issue", "Issue Description", "How to Fix", "Address"], ["issue", "description", "how_to_fix", "address"]),
 }
 
@@ -310,10 +310,10 @@ def build(data, output, site_url=None):
     wb = Workbook()
     wb.remove(wb.active)
     # Keep internal legacy Yes/No compatibility; Excel only displays the symbols.
-    checklist = [dict(row, result={'Yes': '√', 'No': 'X'}.get(row['result'], row['result'])) for row in checklist]
+    checklist = [dict(row, item_name=CHECK_NAMES[row['id']], result={'Yes': '√', 'No': 'X'}.get(row['result'], row['result'])) for row in checklist]
     issues = [dict(row, issue=numbered_issue(row)) for row in issues]
     datasets = {"Checklist": checklist, "10. Robot.txt": issues}
-    widths = {"Checklist": [64, 14, 90, 64], "10. Robot.txt": [42, 90, 80, 90]}
+    widths = {"Checklist": [12, 64, 16, 90, 64], "10. Robot.txt": [42, 90, 80, 90]}
     for title, (headers, fields) in SHEETS.items():
         sheet = wb.create_sheet(title)
         sheet.append(headers)
@@ -342,16 +342,16 @@ def build(data, output, site_url=None):
             sheet.row_dimensions[excel_row[0].row].height = min(409, max(30, line_count * 16 + 8))
             if title == "Checklist":
                 source = checklist[row_index]
-                excel_row[2].value = rich_findings(source['findings'], source.get('findings_bold', []))
-                excel_row[2].data_type = 's'
-                color = {"X": "FCE4D6", "NA": "E7E6E6", "Human Check": "FFF2CC"}.get(excel_row[1].value)
+                excel_row[3].value = rich_findings(source['findings'], source.get('findings_bold', []))
+                excel_row[3].data_type = 's'
+                color = {"X": "FCE4D6", "NA": "E7E6E6", "Human Check": "FFF2CC"}.get(excel_row[2].value)
                 if color:
-                    excel_row[1].fill = PatternFill("solid", fgColor=color)
+                    excel_row[2].fill = PatternFill("solid", fgColor=color)
         if title == "Checklist":
             validation = DataValidation(type="list", formula1='"√,X,NA,Human Check"', allow_blank=False)
             validation.showErrorMessage = True
             sheet.add_data_validation(validation)
-            validation.add(f"B2:B{sheet.max_row}")
+            validation.add(f"C2:C{sheet.max_row}")
     wb.save(output)
     verified = load_workbook(output)
     try:
@@ -362,7 +362,7 @@ def build(data, output, site_url=None):
             if [c.value for c in sheet[1]] != headers or sheet.max_row != len(datasets[title]) + 1:
                 raise RuntimeError(f"Workbook header/count verification failed: {title}")
             for i, source in enumerate(datasets[title], 2):
-                if [sheet.cell(i, j).value or "" for j in range(1, 5)] != [source[f] for f in fields]:
+                if [sheet.cell(i, j).value or "" for j in range(1, len(fields) + 1)] != [source[f] for f in fields]:
                     raise RuntimeError("Workbook value preservation failed")
     finally:
         verified.close()

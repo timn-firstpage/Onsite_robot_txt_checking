@@ -28,9 +28,11 @@ class ReportFormatTests(unittest.TestCase):
             output=Path(directory)/'report.xlsx'
             build(data,output)
             wb=load_workbook(output)
-            self.assertEqual([c.value for c in wb['Checklist'][1]],['Check','Result','Findings','Instruction'])
-            self.assertEqual(wb['Checklist']['B2'].value,'X')
-            self.assertEqual(wb['Checklist']['D2'].value,'Add the missing rules.')
+            self.assertEqual([c.value for c in wb['Checklist'][1]],['Item No.','Item Name','Initial Check','Findings','Instruction'])
+            self.assertEqual(wb['Checklist']['A2'].value,'10.1')
+            self.assertEqual(wb['Checklist']['B2'].value,'Does a robots.txt document exist?')
+            self.assertEqual(wb['Checklist']['C2'].value,'X')
+            self.assertEqual(wb['Checklist']['E2'].value,'Add the missing rules.')
             self.assertEqual(wb['10. Robot.txt']['A2'].value,'10.1, 10.4 Empty robots.txt')
             wb.close()
 
@@ -52,10 +54,10 @@ class ReportFormatTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
             output=Path(directory)/'report.xlsx';build(data,output)
             wb=load_workbook(output)
-            self.assertEqual(wb['Checklist']['B3'].value,'√')
-            self.assertEqual(wb['Checklist']['D2'].data_type,'s')
-            self.assertEqual(wb['Checklist']['D2'].value,'=untrusted instruction')
-            self.assertEqual(wb['Checklist']['D3'].value,'—')
+            self.assertEqual(wb['Checklist']['C3'].value,'√')
+            self.assertEqual(wb['Checklist']['E2'].data_type,'s')
+            self.assertEqual(wb['Checklist']['E2'].value,'=untrusted instruction')
+            self.assertEqual(wb['Checklist']['E3'].value,'—')
             wb.close()
 
     def test_symbol_pass_with_gap_is_not_exported_as_pass(self):

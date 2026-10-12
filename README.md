@@ -145,14 +145,14 @@ robots.txt 中的 add-to-cart、woocommerce 上传目录或日志路径，只作
 
 | Sheet | Columns |
 | --- | --- |
-| Checklist | Check · Result · Findings · Instruction |
+| Checklist | Item No. · Item Name · Initial Check · Findings · Instruction |
 | 10. Robot.txt | Issue · Issue Description · How to Fix · Address |
 
 Result 使用 **√ / X / NA / Human Check**，不再显示 Yes／No。七个 item name 保持你的英文原文。Coverage 列已移除，检查范围、来源及数量留在内部证据；重要限制用一句话写在 Findings，避免把抽样说成全站通过。
 
 **Findings：发现了什么＋简短原因。Instruction：人需要做的下一步。** 两列使用普通读者能理解的词；Findings 通常一至两句，重点局部加粗；Instruction 通常一句动词开头的话，没有要做的事情就填 `—`。不要在 Instruction 重复发现、堆技术步骤或放原有 Coverage。
 
-| Result | Findings | Instruction |
+| Initial Check | Findings | Instruction |
 | --- | --- | --- |
 | √ | robots.txt 已列出网站地图链接。 | — |
 | X | **发现无用的购物车规则** `/*?add-to-cart=`，已确认本站不需要这条限制。 | 请删除这条无用规则。 |

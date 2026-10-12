@@ -25,7 +25,7 @@ class ReportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
             output=Path(directory)/'audit.xlsx';build(data,output)
             wb=load_workbook(output,rich_text=True)
-            value=wb['Checklist']['C3'].value
+            value=wb['Checklist']['D3'].value
             self.assertEqual(str(value),row['findings'])
             bold=''.join(run.text for run in value if isinstance(run,TextBlock) and run.font.b)
             self.assertIn('已检查：',bold)
@@ -36,7 +36,7 @@ class ReportTests(unittest.TestCase):
             self.assertEqual(wb['10. Robot.txt']['B2'].data_type,'s')
             wb.close()
             wb=load_workbook(output)
-            self.assertEqual(wb['Checklist']['C3'].value,row['findings']);wb.close()
+            self.assertEqual(wb['Checklist']['D3'].value,row['findings']);wb.close()
 
     def test_unstructured_findings_bold_lead_and_formula_safety(self):
         from openpyxl.cell.rich_text import TextBlock
@@ -44,9 +44,9 @@ class ReportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
             output=Path(directory)/'audit.xlsx';build(data,output)
             wb=load_workbook(output,rich_text=True)
-            value=wb['Checklist']['C3'].value
+            value=wb['Checklist']['D3'].value
             self.assertEqual(str(value),data['checklist'][1]['findings'])
-            self.assertEqual(wb['Checklist']['C3'].data_type,'s')
+            self.assertEqual(wb['Checklist']['D3'].data_type,'s')
             self.assertTrue(any(isinstance(run,TextBlock) and run.font.b for run in value))
             wb.close()
 
@@ -63,9 +63,9 @@ class ReportTests(unittest.TestCase):
             wb=load_workbook(output)
             self.assertEqual(wb.sheetnames,['Checklist','10. Robot.txt'])
             self.assertEqual(wb['10. Robot.txt'].max_row,1)
-            self.assertIn('Export the missing resource rows.',wb['Checklist']['D2'].value)
-            self.assertNotIn('Export the missing resource rows.',wb['Checklist']['C2'].value)
-            self.assertEqual(wb['Checklist']['B2'].fill.fgColor.rgb,'00FFF2CC')
+            self.assertIn('Export the missing resource rows.',wb['Checklist']['E2'].value)
+            self.assertNotIn('Export the missing resource rows.',wb['Checklist']['D2'].value)
+            self.assertEqual(wb['Checklist']['C2'].fill.fgColor.rgb,'00FFF2CC')
             wb.close()
 
     def test_no_with_gap_needs_only_confirmed_defect_issue(self):
@@ -91,12 +91,12 @@ class ReportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
             output=Path(directory)/'audit.xlsx';build(prepared,output)
             wb=load_workbook(output)
-            self.assertNotIn('75',wb['Checklist']['C2'].value)
-            self.assertNotIn('75/80',wb['Checklist']['D2'].value)
+            self.assertNotIn('75',wb['Checklist']['D2'].value)
+            self.assertNotIn('75/80',wb['Checklist']['E2'].value)
             self.assertIn('75/80',prepared['checklist'][0]['coverage'])
-            self.assertIn('five unresolved',wb['Checklist']['D2'].value)
-            self.assertIn('Five effective permission results unavailable',wb['Checklist']['C2'].value)
-            self.assertIn('five unresolved permission results',wb['Checklist']['D2'].value)
+            self.assertIn('five unresolved',wb['Checklist']['E2'].value)
+            self.assertIn('Five effective permission results unavailable',wb['Checklist']['D2'].value)
+            self.assertIn('five unresolved permission results',wb['Checklist']['E2'].value)
             self.assertEqual(wb['10. Robot.txt'].max_row,1)
             wb.close()
 
@@ -164,10 +164,10 @@ class ReportTests(unittest.TestCase):
             self.assertEqual(result['issues'],1)
             wb=load_workbook(output)
             self.assertEqual(wb.sheetnames,['Checklist','10. Robot.txt'])
-            self.assertEqual([c.value for c in wb['Checklist'][1]],['Check','Result','Findings','Instruction'])
+            self.assertEqual([c.value for c in wb['Checklist'][1]],['Item No.','Item Name','Initial Check','Findings','Instruction'])
             self.assertEqual([c.value for c in wb['10. Robot.txt'][1]],['Issue','Issue Description','How to Fix','Address'])
-            self.assertIn(data['checklist'][2]['na_reason'],wb['Checklist']['C4'].value)
-            self.assertEqual(wb['Checklist']['B3'].value,'√')
+            self.assertIn(data['checklist'][2]['na_reason'],wb['Checklist']['D4'].value)
+            self.assertEqual(wb['Checklist']['C3'].value,'√')
             self.assertEqual(wb['Checklist'].data_validations.dataValidation[0].formula1,'"√,X,NA,Human Check"')
             self.assertEqual(wb['10. Robot.txt']['D2'].value,data['issues'][0]['addresses'][0])
             self.assertEqual(wb['10. Robot.txt']['B2'].data_type,'s')
@@ -209,13 +209,13 @@ class ReportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
             build(data,Path(directory)/'audit.xlsx')
             wb=load_workbook(Path(directory)/'audit.xlsx')
-            self.assertEqual(wb['Checklist']['B3'].value,'Human Check')
-            self.assertIn('Human Check',wb['Checklist']['C3'].value)
-            self.assertIn('Export source page/resource pairs',wb['Checklist']['D3'].value)
+            self.assertEqual(wb['Checklist']['C3'].value,'Human Check')
+            self.assertIn('Human Check',wb['Checklist']['D3'].value)
+            self.assertIn('Export source page/resource pairs',wb['Checklist']['E3'].value)
             self.assertEqual(wb['10. Robot.txt'].max_row,2)
             self.assertEqual(wb['10. Robot.txt']['A2'].value,'10.1 Empty robots.txt')
-            self.assertIn('Resource coverage unverified',wb['Checklist']['C3'].value)
-            self.assertEqual(wb['Checklist']['B3'].fill.fgColor.rgb,'00FFF2CC')
+            self.assertIn('Resource coverage unverified',wb['Checklist']['D3'].value)
+            self.assertEqual(wb['Checklist']['C3'].fill.fgColor.rgb,'00FFF2CC')
             wb.close()
 
     def test_human_check_cannot_replace_confirmed_defect_or_link_to_yes(self):
@@ -246,10 +246,10 @@ class ReportTests(unittest.TestCase):
             result=build(data,Path(directory)/'audit.xlsx')
             self.assertEqual(result['checks'],7)
             wb=load_workbook(Path(directory)/'audit.xlsx')
-            self.assertEqual([wb['Checklist'].cell(i,2).value for i in range(2,9)],['Human Check']*7)
+            self.assertEqual([wb['Checklist'].cell(i,3).value for i in range(2,9)],['Human Check']*7)
             self.assertEqual(wb['10. Robot.txt'].max_row,1)
             self.assertEqual(result['issues'],0)
-            self.assertIn('Obtain required evidence',wb['Checklist']['D2'].value)
+            self.assertIn('Obtain required evidence',wb['Checklist']['E2'].value)
             wb.close()
 
     def test_confirmed_no_with_review_issue_keeps_defect_and_visible_gap(self):

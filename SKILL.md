@@ -9,7 +9,7 @@ Audit checks 10.1–10.7 for a supplied site. Use Python for raw robots collecti
 
 ## Fixed checklist item names
 
-Preserve these exact user-provided names in the report and checklist tables. Prefix with the check ID; do not paraphrase, shorten, correct grammar or translate the item name. Report language applies to Findings/Instruction, not these titles. Display √/X/NA/Human Check; internal Yes/No decision rules remain compatible. In 10.2, √ means no unintended blocking.
+Preserve these exact user-provided names in the report and checklist tables. Put the check ID in Item No. and the exact name in Item Name; do not paraphrase, shorten, correct grammar or translate the item name. Report language applies to Findings/Instruction, not these titles. Display √/X/NA/Human Check; internal Yes/No decision rules remain compatible. In 10.2, √ means no unintended blocking.
 
 | ID | Check |
 | --- | --- |
@@ -49,7 +49,7 @@ Exactly two sheets:
 
 | Sheet | Headers |
 | --- | --- |
-| Checklist | Check; Result; Findings; Instruction |
+| Checklist | Item No.; Item Name; Initial Check; Findings; Instruction |
 | 10. Robot.txt | Issue; Issue Description; How to Fix; Address |
 
 Display √ / X / NA / Human Check, never Yes/No or a blank result. Legacy JSON Yes/No is accepted internally and rendered as √/X. Preserve all seven original item names. Always include every requested check; missing evidence is Human Check, with its reason in Findings and human next step in Instruction. NA requires a reason. Every X requires a linked confirmed issue; Human Check never creates a defect row. If an X also has a gap, retain the defect and describe the gap briefly in Findings with its follow-up in Instruction. Do not claim an overall pass while material gaps remain.
