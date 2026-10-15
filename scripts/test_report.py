@@ -151,9 +151,18 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(len(issues),1)
         self.assertEqual(issues[0]['check_ids'],['10.1','10.4'])
 
+    def test_filename_partial_range(self):
+        self.assertEqual(report_filename('Example','2026-10-15',['10.5','10.2','10.4']),
+                         '10.2-10.5_Example_robots_audit_2026-10-15.xlsx')
+        self.assertEqual(report_filename('Example','2026-10-15',['10.4']),
+                         '10.4_Example_robots_audit_2026-10-15.xlsx')
+        for invalid in [[], ['14.1'], ['10.1', 'invalid']]:
+            with self.assertRaises(ValueError):
+                report_filename('Example','2026-10-15',invalid)
+
     def test_filename(self):
-        self.assertEqual(report_filename('Example','2026-10-05'),'Example_robots_audit_2026-10-05.xlsx')
-        self.assertEqual(report_filename('品牌/香港','2026-10-05'),'品牌_香港_robots_audit_2026-10-05.xlsx')
+        self.assertEqual(report_filename('Example','2026-10-05'),'10.1-10.7_Example_robots_audit_2026-10-05.xlsx')
+        self.assertEqual(report_filename('品牌/香港','2026-10-05'),'10.1-10.7_品牌_香港_robots_audit_2026-10-05.xlsx')
         with self.assertRaises(ValueError): report_filename('Example','2026-02-30')
 
     def test_export_schema_reasons_urls_and_no_overwrite(self):

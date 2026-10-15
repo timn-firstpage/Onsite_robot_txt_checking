@@ -162,7 +162,7 @@ Result 使用 **√ / X / NA / Human Check**，不再显示 Yes／No。七个 it
 
 证据不足仍交付全部请求项；Human Check 的原因留在 Findings、动作留在 Instruction，不写入问题页。X 必须有对应确认问题；没有确认问题时保留问题页四列表头。NA 必须有原因。旧 JSON 的 Yes／No 和 coverage 仍可读取：结果转为 √／X，coverage 不展示；明确标记的 Next action／下一步会移入 Instruction。
 
-完整输入与写法见 [report-schema.md](references/report-schema.md)。使用 `--site-url` 补齐缺项为 Human Check，`--prepared-input` 保存交付输入。文件名保持 `{site name}_robots_audit_{YYYY-MM-DD}.xlsx`，按用户时区，不覆盖旧文件。
+完整输入与写法见 [report-schema.md](references/report-schema.md)。使用 `--site-url` 补齐缺项为 Human Check，`--prepared-input` 保存交付输入。文件名使用 `{item range}_{site name}_robots_audit_{YYYY-MM-DD}.xlsx`，按用户时区，不覆盖旧文件。
 
 ## 使用
 

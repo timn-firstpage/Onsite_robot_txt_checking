@@ -52,7 +52,7 @@ Legacy kind=human_check issue rows migrate their description to Findings, action
 
 Always deliver all requested checks using current supported findings, even when more evidence is needed. Use `python scripts/build_report.py --site-url <actual audited URL> --prepared-input <new findings-delivery.json path>` with the remaining required CLI arguments to fill missing rows as Human Check. Gaps downgrade provisional √/Yes or NA to Human Check; confirmed X/No and its defect remain. Do not overwrite an old report. Runtime/write errors must be reported accurately rather than claiming a file exists.
 
-Archive config, manifest, cumulative usage, raw responses/exports, URL inventory, evidence_gaps.json, original findings.json, prepared findings-delivery.json, final workbook and handover under the unique run directory. Retain evidence dates and scope. Do not commit customer files. Workbook name remains `{site name}_robots_audit_{YYYY-MM-DD}.xlsx`, using the user's timezone.
+Archive config, manifest, cumulative usage, raw responses/exports, URL inventory, evidence_gaps.json, original findings.json, prepared findings-delivery.json, final workbook and handover under the unique run directory. Retain evidence dates and scope. Do not commit customer files. Workbook name is `{item range}_{site name}_robots_audit_{YYYY-MM-DD}.xlsx`, using the user's timezone.
 
 ## Findings emphasis
 
@@ -72,3 +72,5 @@ Optional findings_bold is a list of exact existing phrases, e.g. `["内容为空
 | Sitemap declaration missing | robots.txt 没有网站地图链接。 | 请添加正确的 Sitemap 链接。 |
 
 Use examples only when evidence supports them. Preserve distinctions between crawling, indexing, access protection and response health. No ranking claims without evidence. Instruction is a human action, not an explanation of how the agent works.
+
+Filename prefix uses the lowest and highest item IDs actually included in the delivered Checklist, in numeric order, including NA and Human Check. Full robots reports use `10.1-10.7`; a single-item report uses just `10.4`. A range is a filename summary; the Checklist lists the exact included items for partial/non-contiguous requests. Example: `10.1-10.7_Example_robots_audit_2026-10-15.xlsx`.

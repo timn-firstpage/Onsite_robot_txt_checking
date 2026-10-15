@@ -58,4 +58,4 @@ Findings states what was found and why in one or two simple sentences, with sele
 
 The Issue cell must start with its check number, e.g. `10.1 Missing robots.txt`. The builder derives all linked numbers from check_ids, including shared causes such as `10.1, 10.7 Empty robots.txt`. Keep Issue Description and How to Fix concise, preserve full affected URLs and do not fabricate impact. Keep both sheet headers when there are no issues. Protect formula-like input. See [report schema](references/report-schema.md) for the exact input and compatibility rules.
 
-Filename: `{site name}_robots_audit_{YYYY-MM-DD}.xlsx`. Use the user's site name or hostname without www and the user's timezone. Never overwrite a previous report; use a new run directory. Keep machine setup messages in handover/logs.
+Filename: `{item range}_{site name}_robots_audit_{YYYY-MM-DD}.xlsx`. Use the user's site name or hostname without www and the user's timezone. Never overwrite a previous report; use a new run directory. Keep machine setup messages in handover/logs.

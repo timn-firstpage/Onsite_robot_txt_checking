@@ -35,7 +35,7 @@ SHEETS = {
 }
 
 
-def report_filename(site_name, audit_date):
+def report_filename(site_name, audit_date, check_ids=None):
     if not isinstance(site_name, str) or not site_name.strip():
         raise ValueError("site name is required")
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", audit_date):
@@ -44,7 +44,12 @@ def report_filename(site_name, audit_date):
     name = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", site_name.strip()).strip(" .")
     if not name:
         raise ValueError("site name contains no usable filename characters")
-    return f"{name}_robots_audit_{audit_date}.xlsx"
+    ids = list(CHECK_IDS) if check_ids is None else list(check_ids)
+    if not ids or any(cid not in CHECK_IDS for cid in ids):
+        raise ValueError('Filename requires valid covered robots check IDs')
+    ids = sorted(set(ids), key=lambda cid: tuple(map(int, cid.split('.'))))
+    covered = ids[0] if len(ids) == 1 else f'{ids[0]}-{ids[-1]}'
+    return f"{covered}_{name}_robots_audit_{audit_date}.xlsx"
 
 
 def required_text(row, fields):
@@ -383,7 +388,8 @@ if __name__ == "__main__":
         parser.error('--prepared-input requires --site-url')
     if args.site_url:
         data = complete_for_export(data, args.site_url)
-    output = args.output_dir / report_filename(args.site_name, args.date)
+    checklist, _ = normalize(data)
+    output = args.output_dir / report_filename(args.site_name, args.date, [row['id'] for row in checklist])
     if output.exists():
         raise FileExistsError(f'Refusing to overwrite {output}; select a new path')
     if args.prepared_input:
